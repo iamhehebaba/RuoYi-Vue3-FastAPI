@@ -1,0 +1,201 @@
+{
+  "info": {
+    "name": "RuoYi-Vue3-FastAPI",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:9099/dev-api" },
+    { "key": "accessToken", "value": "" },
+    { "key": "uuid", "value": "" },
+    { "key": "captcha_code", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [ { "key": "token", "value": "{{accessToken}}", "type": "string" } ]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Captcha Image",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/captchaImage",
+              "host": ["{{baseUrl}}"],
+              "path": ["captchaImage"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }",
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "if (json.code !== undefined) { pm.test('code === 200', function () { pm.expect(json.code).to.eql(200); }); }",
+                  "if (json.uuid) { pm.collectionVariables.set('uuid', json.uuid); }",
+                  "const template = `<div style=\"font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace\">\n  <p><strong>UUID:</strong> {{uuid}}</p>\n  <p>在下方图片中读取验证码并填入 Login 请求的 captcha_code 变量。</p>\n  <img style=\"border:1px solid #eee; max-width: 100%\" src=\"data:image/png;base64,{{img}}\" />\n</div>`;",
+                  "if (json.img) { pm.visualizer.set(template, { uuid: json.uuid, img: json.img }); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login (x-www-form-urlencoded)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "username", "value": "admin", "type": "text" },
+                { "key": "password", "value": "admin123", "type": "text" },
+                { "key": "code", "value": "{{captcha_code}}", "type": "text" },
+                { "key": "uuid", "value": "{{uuid}}", "type": "text" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }",
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('code === 200', function () { pm.expect(json.code).to.eql(200); });",
+                  "let token = json.token || json.access_token;",
+                  "pm.test('received token', function () { pm.expect(token, 'token should be present').to.be.a('string').and.not.empty; });",
+                  "pm.collectionVariables.set('accessToken', token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{accessToken}}", "type": "string" } ] },
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/logout", "host": ["{{baseUrl}}"], "path": ["logout"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }",
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('code === 200', function () { pm.expect(json.code).to.eql(200); });",
+                  "pm.collectionVariables.unset('accessToken');"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Get Info",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{accessToken}}", "type": "string" } ] },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/getInfo", "host": ["{{baseUrl}}"], "path": ["getInfo"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": [
+                "let json = {}; try { json = pm.response.json(); } catch (e) { json = {}; }",
+                "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                "pm.test('code === 200', function () { pm.expect(json.code).to.eql(200); });",
+                "pm.test('success === true', function () { pm.expect(json.success).to.eql(true); });"
+              ] }
+            }
+          ]
+        },
+        {
+          "name": "Get Routers",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{accessToken}}", "type": "string" } ] },
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/getRouters", "host": ["{{baseUrl}}"], "path": ["getRouters"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": [
+                "let json = {}; try { json = pm.response.json(); } catch (e) { json = {}; }",
+                "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                "pm.test('code === 200', function () { pm.expect(json.code).to.eql(200); });",
+                "if (json.data !== undefined) { pm.test('routers is array', function () { pm.expect(json.data).to.be.an('array'); }); }"
+              ] }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Common",
+      "item": [
+        {
+          "name": "Upload File",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{accessToken}}", "type": "string" } ] },
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": "/absolute/path/to/your/file.png" }
+              ]
+            },
+            "url": { "raw": "{{baseUrl}}/common/upload", "host": ["{{baseUrl}}"], "path": ["common", "upload"] }
+          },
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "let json = {}; try { json = pm.response.json(); } catch (e) { json = {}; }",
+              "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('code === 200', function () { pm.expect(json.code).to.eql(200); });"
+            ] } }
+          ]
+        },
+        {
+          "name": "Download File",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{accessToken}}", "type": "string" } ] },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/common/download?fileName=example.txt&delete=false",
+              "host": ["{{baseUrl}}"],
+              "path": ["common", "download"],
+              "query": [
+                { "key": "fileName", "value": "example.txt" },
+                { "key": "delete", "value": "false" }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
