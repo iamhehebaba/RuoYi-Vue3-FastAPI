@@ -25,12 +25,16 @@ loginController = APIRouter()
 async def login(
     request: Request, form_data: CustomOAuth2PasswordRequestForm = Depends(), query_db: AsyncSession = Depends(get_db)
 ):
-    captcha_enabled = (
-        True
-        if await request.app.state.redis.get(f'{RedisInitKeyConfig.SYS_CONFIG.key}:sys.account.captchaEnabled')
-        == 'true'
-        else False
-    )
+    # 当启动参数 --no-captcha 开启时，强制关闭登录验证码校验
+    if AppConfig.app_no_captcha:
+        captcha_enabled = False
+    else:
+        captcha_enabled = (
+            True
+            if await request.app.state.redis.get(f'{RedisInitKeyConfig.SYS_CONFIG.key}:sys.account.captchaEnabled')
+            == 'true'
+            else False
+        )
     user = UserLogin(
         userName=form_data.username,
         password=form_data.password,

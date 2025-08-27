@@ -22,6 +22,8 @@ class AppSettings(BaseSettings):
     app_reload: bool = True
     app_ip_location_query: bool = True
     app_same_time_login: bool = True
+    # 新增：是否在登录时跳过验证码校验，由启动参数 --no-captcha 或环境变量 APP_NO_CAPTCHA 控制
+    app_no_captcha: bool = False
 
 
 class JwtSettings(BaseSettings):
@@ -213,10 +215,14 @@ class GetConfig:
             # 使用argparse定义命令行参数
             parser = argparse.ArgumentParser(description='命令行参数')
             parser.add_argument('--env', type=str, default='', help='运行环境')
+            # 新增：是否在登录时跳过验证码校验
+            parser.add_argument('--no-captcha', action='store_true', help='登录时不校验验证码')
             # 解析命令行参数
             args = parser.parse_args()
             # 设置环境变量，如果未设置命令行参数，默认APP_ENV为dev
             os.environ['APP_ENV'] = args.env if args.env else 'dev'
+            # 根据启动参数设置是否跳过验证码
+            os.environ['APP_NO_CAPTCHA'] = 'true' if getattr(args, 'no_captcha', False) else 'false'
         # 读取运行环境
         run_env = os.environ.get('APP_ENV', '')
         # 运行环境未指定时默认加载.env.dev
