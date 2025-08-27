@@ -254,6 +254,8 @@ insert into sys_menu values(105,  '字典管理', 1,   '6', 'dict',       'syste
 insert into sys_menu values(106,  '参数设置', 1,   '7', 'config',     'system/config/index',      '', '', 1, 0, 'C', '0', '0', 'system:config:list',      'edit',          'admin', current_timestamp, '', null, '参数设置菜单');
 insert into sys_menu values(107,  '通知公告', 1,   '8', 'notice',     'system/notice/index',      '', '', 1, 0, 'C', '0', '0', 'system:notice:list',      'message',       'admin', current_timestamp, '', null, '通知公告菜单');
 insert into sys_menu values(108,  '日志管理', 1,   '9', 'log',        '',                         '', '', 1, 0, 'M', '0', '0', '',                        'log',           'admin', current_timestamp, '', null, '日志管理菜单');
+insert into sys_menu values(118,  '模型管理', 1,   '10', 'model',     'system/model/index',       '', '', 1, 0, 'M', '0', '0', 'system:model:list',                        'model',         'admin', current_timestamp, '', null, '模型管理菜单');
+insert into sys_menu values(119,  '知识库管理', 1,   '11', 'kb',      'system/kb/index',          '', '', 1, 0, 'M', '0', '0', 'system:kb:list',                        'kb',     'admin', current_timestamp, '', null, '知识库管理菜单');
 insert into sys_menu values(109,  '在线用户', 2,   '1', 'online',     'monitor/online/index',     '', '', 1, 0, 'C', '0', '0', 'monitor:online:list',     'online',        'admin', current_timestamp, '', null, '在线用户菜单');
 insert into sys_menu values(110,  '定时任务', 2,   '2', 'job',        'monitor/job/index',        '', '', 1, 0, 'C', '0', '0', 'monitor:job:list',        'job',           'admin', current_timestamp, '', null, '定时任务菜单');
 insert into sys_menu values(111,  '数据监控', 2,   '3', 'druid',      'monitor/druid/index',      '', '', 1, 0, 'C', '0', '0', 'monitor:druid:list',      'druid',         'admin', current_timestamp, '', null, '数据监控菜单');
@@ -265,7 +267,21 @@ insert into sys_menu values(116,  '代码生成', 3,   '2', 'gen',        'tool/
 insert into sys_menu values(117,  '系统接口', 3,   '3', 'swagger',    'tool/swagger/index',       '', '', 1, 0, 'C', '0', '0', 'tool:swagger:list',       'swagger',       'admin', current_timestamp, '', null, '系统接口菜单');
 -- 三级菜单
 insert into sys_menu values(500,  '操作日志', 108, '1', 'operlog',    'monitor/operlog/index',    '', '', 1, 0, 'C', '0', '0', 'monitor:operlog:list',    'form',          'admin', current_timestamp, '', null, '操作日志菜单');
-insert into sys_menu values(501,  '登录日志', 108, '2', 'logininfor', 'monitor/logininfor/index', '', '', 1, 0, 'C', '0', '0', 'monitor:logininfor:list', 'logininfor',    'admin', current_timestamp, '', null, '登录日志菜单');
+ insert into sys_menu values(501,  '登录日志', 108, '2', 'logininfor', 'monitor/logininfor/index', '', '', 1, 0, 'C', '0', '0', 'monitor:logininfor:list', 'logininfor',    'admin', current_timestamp, '', null, '登录日志菜单');
+ -- 模型管理子菜单
+ insert into sys_menu values(502,  '模型添加', 118, '1', 'model/add',    'system/model/add',       '', '', 1, 0, 'C', '0', '0', 'system:model:add',       'plus',         'admin', current_timestamp, '', null, '模型添加菜单');
+ insert into sys_menu values(503,  '模型列表', 118, '2', 'model/list',   'system/model/list',      '', '', 1, 0, 'C', '0', '0', 'system:model:list',      'list',         'admin', current_timestamp, '', null, '模型列表菜单');  
+ insert into sys_menu values(504,  '模型删除', 118, '3', 'model/delete', 'system/model/delete',    '', '', 1, 0, 'C', '0', '0', 'system:model:remove',    'delete',       'admin', current_timestamp, '', null, '模型删除菜单');
+ insert into sys_menu values(505,  '默认配置', 118, '4', 'model/config', 'system/model/config',    '', '', 1, 0, 'C', '0', '0', 'system:model:config',    'edit',         'admin', current_timestamp, '', null, '默认配置菜单');
+ -- 知识库管理子菜单
+insert into sys_menu values('506',  '知识库添加', '119', '1', 'kb/add',    'system/kb/add',       '', '', 1, 0, 'C', '0', '0', 'system:kb:add',       'add',         'admin', sysdate(), '', null, '知识库添加菜单');
+insert into sys_menu values('507',  '知识库修改', '119', '2', 'kb/edit',   'system/kb/edit',      '', '', 1, 0, 'C', '0', '0', 'system:kb:edit',      'edit',         'admin', sysdate(), '', null, '知识库修改菜单');
+insert into sys_menu values('508',  '知识库删除', '119', '3', 'kb/delete', 'system/kb/delete',    '', '', 1, 0, 'C', '0', '0', 'system:kb:remove',    'delete',       'admin', sysdate(), '', null, '知识库删除菜单');
+insert into sys_menu values('509',  '知识库列表', '119', '4', 'kb/list',   'system/kb/list',      '', '', 1, 0, 'C', '0', '0', 'system:kb:list',      'list',         'admin', sysdate(), '', null, '知识库列表菜单');
+insert into sys_menu values('510',  '文档添加', '119', '5', 'kb/addDocument',     'system/kb/addDocument',        '', '', 1, 0, 'C', '0', '0', 'system:kb:addDocument',        'add',       'admin', sysdate(), '', null, '文档添加菜单');
+insert into sys_menu values('511',  '文档删除', '119', '6', 'kb/deleteDocument',  'system/kb/deleteDocument',     '', '', 1, 0, 'C', '0', '0', 'system:kb:deleteDocument',     'delete',       'admin', sysdate(), '', null, '文档删除菜单');
+insert into sys_menu values('512',  '文档列表', '119', '7', 'kb/listDocument',    'system/kb/listDocument',       '', '', 1, 0, 'C', '0', '0', 'system:kb:listDocument',       'list',         'admin', sysdate(), '', null, '文档列表菜单');
+
 -- 用户管理按钮
 insert into sys_menu values(1000, '用户查询', 100, '1',  '', '', '', '', 1, 0, 'F', '0', '0', 'system:user:query',          '#', 'admin', current_timestamp, '', null, '');
 insert into sys_menu values(1001, '用户新增', 100, '2',  '', '', '', '', 1, 0, 'F', '0', '0', 'system:user:add',            '#', 'admin', current_timestamp, '', null, '');
@@ -461,6 +477,20 @@ insert into sys_role_menu values (2, 1057);
 insert into sys_role_menu values (2, 1058);
 insert into sys_role_menu values (2, 1059);
 insert into sys_role_menu values (2, 1060);
+-- 新增：模型管理/知识库管理 及子菜单
+insert into sys_role_menu values (2, 118);
+insert into sys_role_menu values (2, 119);
+insert into sys_role_menu values (2, 502);
+insert into sys_role_menu values (2, 503);
+insert into sys_role_menu values (2, 504);
+insert into sys_role_menu values (2, 505);
+insert into sys_role_menu values (2, 506);
+insert into sys_role_menu values (2, 507);
+insert into sys_role_menu values (2, 508);
+insert into sys_role_menu values (2, 509);
+insert into sys_role_menu values (2, 510);
+insert into sys_role_menu values (2, 511);
+insert into sys_role_menu values (2, 512);
 
 -- ----------------------------
 -- 8、角色和部门关联表  角色1-N部门
