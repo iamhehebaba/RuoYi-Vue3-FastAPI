@@ -242,6 +242,7 @@ class LoginService:
             post_ids = ','.join([str(row.post_id) for row in query_user.get('user_post_info')])
             role_ids = ','.join([str(row.role_id) for row in query_user.get('user_role_info')])
             roles = [row.role_key for row in query_user.get('user_role_info')]
+            graph_ids = [row.graph_id for row in query_user.get('user_agent_info')]
 
             current_user = CurrentUserModel(
                 permissions=permissions,
@@ -252,6 +253,7 @@ class LoginService:
                     roleIds=role_ids,
                     dept=CamelCaseUtil.transform_result(query_user.get('user_dept_info')),
                     role=CamelCaseUtil.transform_result(query_user.get('user_role_info')),
+                    agentIds=graph_ids
                 ),
             )
             return current_user

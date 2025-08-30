@@ -24,6 +24,7 @@ from module_admin.controller.server_controller import serverController
 from module_admin.controller.user_controller import userController
 from module_generator.controller.gen_controller import genController
 from module_admin.controller.proxy_controller import proxyController
+from module_admin.controller.agent_controller import agentController
 from sub_applications.handle import handle_sub_applications
 from utils.common_util import worship
 from utils.log_util import logger
@@ -80,6 +81,7 @@ controller_list = [
     {'router': cacheController, 'tags': ['系统监控-缓存监控']},
     {'router': commonController, 'tags': ['通用模块']},
     {'router': genController, 'tags': ['代码生成']},
+    {'router': agentController, 'tags': ['智能体管理']},
     {'router': proxyController, 'tags': ['代理模块']},
 ]
 
