@@ -1075,3 +1075,46 @@ RETURN pg_catalog.array_to_string(tokens[indexnum:length], $2);
 END IF;
 END;
 $$ IMMUTABLE STRICT LANGUAGE PLPGSQL;
+
+-- ----------------------------
+-- 20、智能体表
+-- ----------------------------
+drop table if exists sys_agent;
+create table sys_agent (
+    graph_id varchar(100) not null,
+    assistant_id varchar(100) not null,
+    name varchar(100) not null,
+    description varchar(500) default '',
+    remark varchar(500) default null,
+    created_by varchar(64) default 'admin',
+    status char(1) default '0',
+    order_num int(4) default 0,
+    create_time timestamp(0),
+    primary key (graph_id)
+);
+comment on column sys_agent.graph_id is 'langgraph的graph_id，UUID字符串';
+comment on column sys_agent.assistant_id is 'langgraph的assistant_id，UUID字符串';
+comment on column sys_agent.name is '智能体名字';
+comment on column sys_agent.description is '智能体描述';
+comment on column sys_agent.remark is '备注';
+comment on column sys_agent.created_by is '创建者';
+comment on column sys_agent.status is '智能体状态（0正常,1停用）';
+comment on table sys_agent is '智能体表';
+
+insert into sys_agent values('general_chatbot', '', '通用聊天智能体', '通用聊天智能体', '通用聊天智能体', 'admin', '0', 1, sysdate());
+
+
+-- ----------------------------
+-- 21、角色和智能体关联表
+-- ----------------------------
+drop table if exists sys_role_agent;
+create table sys_role_agent (
+    role_id bigint not null,
+    graph_id varchar(100) not null,
+    primary key (role_id, graph_id)
+);
+comment on column sys_role_agent.role_id is '角色ID';
+comment on column sys_role_agent.graph_id is '智能体graph_id';
+comment on table sys_role_agent is '角色和智能体关联表';
+
+insert into sys_role_agent values(2, 'general_chatbot');

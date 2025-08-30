@@ -740,3 +740,37 @@ create table gen_table_column (
   update_time       datetime                                   comment '更新时间',
   primary key (column_id)
 ) engine=innodb auto_increment=1 comment = '代码生成业务表字段';
+
+
+-- ----------------------------
+-- 20、智能体表
+-- ----------------------------
+drop table if exists sys_agent;
+create table sys_agent (
+  graph_id          varchar(100)    not null                   comment 'langgraph的graph_id，UUID字符串',
+  assistant_id      varchar(100)    not null                   comment 'langgraph的assistant_id，UUID字符串',
+  name              varchar(100)    not null                   comment '智能体名字',
+  description       varchar(500)    default ''                 comment '智能体描述',
+  remark            varchar(500)    default null               comment '备注',
+  created_by        varchar(64)     default 'admin'            comment '创建者',
+  status            char(1)         default '0'                comment '智能体状态（0正常,1停用）',
+  order_num         int(4)          default 0                  comment '显示顺序',
+  create_time       datetime                                   comment '创建时间',
+  primary key (graph_id)
+) engine=innodb comment = '智能体表';
+
+insert into sys_agent values('general_chatbot', '', '通用聊天智能体', '通用聊天智能体', '通用聊天智能体', 'admin', '0', 1, sysdate());
+
+
+-- ----------------------------
+-- 21、角色和智能体关联表
+-- ----------------------------
+drop table if exists sys_role_agent;
+create table sys_role_agent (
+  role_id           bigint(20)      not null                   comment '角色ID',
+  graph_id          varchar(100)    not null                   comment '智能体graph_id',
+  primary key (role_id, graph_id)
+) engine=innodb comment = '角色和智能体关联表';
+
+insert into sys_role_agent values(2, 'general_chatbot');
+

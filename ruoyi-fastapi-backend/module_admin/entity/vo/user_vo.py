@@ -117,6 +117,7 @@ class UserInfoModel(UserModel):
     role_ids: Optional[Union[str, None]] = Field(default=None, description='角色ID信息')
     dept: Optional[Union[DeptModel, None]] = Field(default=None, description='部门信息')
     role: Optional[List[Union[RoleModel, None]]] = Field(default=[], description='角色信息')
+    agent_ids: Optional[List[str]] = Field(default = [], description='智能体ID信息')
 
 
 class CurrentUserModel(BaseModel):

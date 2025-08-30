@@ -4,7 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from module_admin.entity.do.dept_do import SysDept
 from module_admin.entity.do.menu_do import SysMenu
 from module_admin.entity.do.post_do import SysPost
-from module_admin.entity.do.role_do import SysRole, SysRoleDept, SysRoleMenu  # noqa: F401
+from module_admin.entity.do.agent_do import SysAgent
+from module_admin.entity.do.role_do import SysRole, SysRoleDept, SysRoleMenu, SysRoleAgent  # noqa: F401
 from module_admin.entity.do.user_do import SysUser, SysUserPost, SysUserRole
 from module_admin.entity.vo.user_vo import (
     UserModel,
@@ -172,15 +173,59 @@ class UserDao:
                 .all()
             )
 
+        query_user_agent_info = await cls.get_user_agent_info(db, user_id, role_id_list)
         results = dict(
             user_basic_info=query_user_basic_info,
             user_dept_info=query_user_dept_info,
             user_role_info=query_user_role_info,
             user_post_info=query_user_post_info,
             user_menu_info=query_user_menu_info,
+            user_agent_info=query_user_agent_info
         )
-
         return results
+
+    @classmethod
+    async def get_user_agent_info(cls, db: AsyncSession, user_id: int, role_id_list: list):
+        """
+        Get agent information for a user based on their roles
+        
+        Args:
+            db: AsyncSession object
+            user_id: ID of the user
+            role_id_list: List of role IDs for the user
+            
+        Returns:
+            List of agent information
+        """
+        if 1 in role_id_list:
+            query_user_agent_info = (
+                (await db.execute(select(SysAgent).where(SysAgent.status == '0').distinct())).scalars().all()
+            )
+        else:
+            query_user_agent_info = (
+                (
+                    await db.execute(
+                        select(SysAgent)
+                        .select_from(SysUser)
+                        .where(SysUser.status == '0', SysUser.del_flag == '0', SysUser.user_id == user_id)
+                        .join(SysUserRole, SysUser.user_id == SysUserRole.user_id, isouter=True)
+                        .join(
+                            SysRole,
+                            and_(
+                                SysUserRole.role_id == SysRole.role_id, SysRole.status == '0', SysRole.del_flag == '0'
+                            ),
+                            isouter=True,
+                        )
+                        .join(SysRoleAgent, SysRole.role_id == SysRoleAgent.role_id, isouter=True)
+                        .join(SysAgent, and_(SysRoleAgent.graph_id == SysAgent.graph_id, SysAgent.status == '0'))
+                        .order_by(SysAgent.order_num)
+                        .distinct()
+                    )
+                )
+                .scalars()
+                .all()
+            )
+        return query_user_agent_info
 
     @classmethod
     async def get_user_detail_by_id(cls, db: AsyncSession, user_id: int):
@@ -263,12 +308,17 @@ class UserDao:
             .scalars()
             .all()
         )
+
+        role_id_list = [item.role_id for item in query_user_role_info]
+        query_user_agent_info = await cls.get_user_agent_info(db, user_id, role_id_list)
+
         results = dict(
             user_basic_info=query_user_basic_info,
             user_dept_info=query_user_dept_info,
             user_role_info=query_user_role_info,
             user_post_info=query_user_post_info,
             user_menu_info=query_user_menu_info,
+            user_agent_info=query_user_agent_info
         )
 
         return results
