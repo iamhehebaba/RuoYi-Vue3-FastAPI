@@ -1,10 +1,15 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic.alias_generators import to_camel
 from typing import Optional, List
 from datetime import datetime
 
 
 class AgentModel(BaseModel):
-    """智能体详情模型"""
+    """
+    智能体表对应的pydantic模型
+    """
+    model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
+
     # id: int = Field(..., description="智能体ID")
     graph_id: Optional[str] = Field(None, description="智能体图ID") 
     name: Optional[str] = Field(None, description="智能体名称")
