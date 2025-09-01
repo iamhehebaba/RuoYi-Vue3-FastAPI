@@ -755,11 +755,12 @@ create table sys_agent (
   created_by        varchar(64)     default 'admin'            comment '创建者',
   status            char(1)         default '0'                comment '智能体状态（0正常,1停用）',
   order_num         int(4)          default 0                  comment '显示顺序',
-  create_time       datetime                                   comment '创建时间',
+  created_at        datetime                                   comment '创建时间',
   primary key (graph_id)
 ) engine=innodb comment = '智能体表';
 
 insert into sys_agent values('general_chatbot', '', '通用聊天智能体', '通用聊天智能体', '通用聊天智能体', 'admin', '0', 1, sysdate());
+insert into sys_agent values('ppt_master', '', 'PPT大师', 'PPT大师', 'PPT大师', 'admin', '0', 1, sysdate());
 
 
 -- ----------------------------
@@ -773,4 +774,5 @@ create table sys_role_agent (
 ) engine=innodb comment = '角色和智能体关联表';
 
 insert into sys_role_agent values(2, 'general_chatbot');
+insert into sys_role_agent values(2, 'ppt_master');
 

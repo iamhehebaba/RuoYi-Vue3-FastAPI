@@ -1089,7 +1089,7 @@ create table sys_agent (
     created_by varchar(64) default 'admin',
     status char(1) default '0',
     order_num int(4) default 0,
-    create_time timestamp(0),
+    created_at timestamp(0),
     primary key (graph_id)
 );
 comment on column sys_agent.graph_id is 'langgraph的graph_id，UUID字符串';
@@ -1102,6 +1102,7 @@ comment on column sys_agent.status is '智能体状态（0正常,1停用）';
 comment on table sys_agent is '智能体表';
 
 insert into sys_agent values('general_chatbot', '', '通用聊天智能体', '通用聊天智能体', '通用聊天智能体', 'admin', '0', 1, sysdate());
+insert into sys_agent values('ppt_master', '', 'PPT大师', 'PPT大师', 'PPT大师', 'admin', '0', 1, sysdate());
 
 
 -- ----------------------------
@@ -1118,3 +1119,4 @@ comment on column sys_role_agent.graph_id is '智能体graph_id';
 comment on table sys_role_agent is '角色和智能体关联表';
 
 insert into sys_role_agent values(2, 'general_chatbot');
+insert into sys_role_agent values(2, 'ppt_master');
