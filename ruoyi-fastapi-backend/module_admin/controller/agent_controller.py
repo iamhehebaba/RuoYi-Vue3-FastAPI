@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Body
+from fastapi import APIRouter, Depends, Body, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 from config.get_db import get_db
@@ -18,7 +18,8 @@ agentController = APIRouter(prefix='/langgraph', tags=['智能体管理'])
 # 任何具有角色编辑、角色添加权限的人都可以访问该接口以便定义、修改角色的智能体时
 @agentController.post('/assistants/search', dependencies=[Depends(CheckUserInterfaceAuth(['system:role:add', 'system:role:edit'], False))])
 async def search_agents(
-    request: AgentQueryModel = Body(...),
+    request: Request,
+    search_condition: AgentQueryModel,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUserModel = Depends(LoginService.get_current_user),
     agent_scope_sql: str = Depends(GetAgentScope('SysAgent'))
@@ -29,17 +30,7 @@ async def search_agents(
     根据用户角色权限返回可访问的智能体列表，支持按graph_id过滤，按name排序，支持limit和offset分页。
     """
     try:
-        # # 获取用户角色ID列表
-        # role_ids = [role.role_id for role in current_user.user.role] if current_user.user and current_user.user.role else []
-        
-        # if not role_ids:
-        #     logger.warning(f"用户 {current_user.user.user_name if current_user.user else 'unknown'} 没有分配角色")
-        #     return ResponseUtil.success(data=[])
-        
-        # # 调用服务层搜索智能体
-        # result = await AgentService.search_agents(db, role_ids, request)
-        
-        result = await AgentService.get_agent_list_service(db, request, agent_scope_sql)
+        result = await AgentService.get_agent_list_service(db, search_condition, agent_scope_sql)
         return ResponseUtil.success(data=result)
         
     except Exception as e:

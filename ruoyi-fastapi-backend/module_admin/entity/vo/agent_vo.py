@@ -24,6 +24,9 @@ class AgentModel(BaseModel):
 
 class AgentQueryModel(AgentModel):
     """智能体搜索请求模型"""
+
+    model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
+
     limit: Optional[int] = Field(5, description="返回记录数限制", ge=1, le=100)
     offset: Optional[int] = Field(0, description="偏移量", ge=0)
 
