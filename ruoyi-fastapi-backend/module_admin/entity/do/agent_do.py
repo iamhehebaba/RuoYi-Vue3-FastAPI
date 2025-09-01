@@ -13,7 +13,6 @@ class SysAgent(Base):
     graph_id = Column(String(100), primary_key=True, nullable=False, unique=True, comment='智能体图ID')
     name = Column(String(100), nullable=False, comment='智能体名称')
     description = Column(Text, comment='智能体描述')
-    role_id = Column(Integer, nullable=False, comment='关联角色ID')
     status = Column(String(1), default='0', comment='状态（0正常 1停用）')
     remark = Column(String(500), comment='备注')
     order_num = Column(Integer, default=0, comment='排序')

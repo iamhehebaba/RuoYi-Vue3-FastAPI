@@ -6,7 +6,7 @@ from datetime import datetime
 class AgentModel(BaseModel):
     """智能体详情模型"""
     # id: int = Field(..., description="智能体ID")
-    graph_id: Optional[str] = Field(None, description="智能体图ID")
+    graph_id: Optional[str] = Field(None, description="智能体图ID") 
     name: Optional[str] = Field(None, description="智能体名称")
     # role_id: Optional[int] = Field(None, description="关联角色ID")
     status: Optional[str] = Field(None, description="状态")

@@ -1089,7 +1089,7 @@ create table sys_agent (
     created_by varchar(64) default 'admin',
     status char(1) default '0',
     order_num int(4) default 0,
-    create_time timestamp(0),
+    created_at timestamp(0),
     primary key (graph_id)
 );
 comment on column sys_agent.graph_id is 'langgraph的graph_id，UUID字符串';

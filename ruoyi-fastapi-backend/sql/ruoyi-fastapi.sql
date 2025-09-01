@@ -755,7 +755,7 @@ create table sys_agent (
   created_by        varchar(64)     default 'admin'            comment '创建者',
   status            char(1)         default '0'                comment '智能体状态（0正常,1停用）',
   order_num         int(4)          default 0                  comment '显示顺序',
-  create_time       datetime                                   comment '创建时间',
+  created_at        datetime                                   comment '创建时间',
   primary key (graph_id)
 ) engine=innodb comment = '智能体表';
 
