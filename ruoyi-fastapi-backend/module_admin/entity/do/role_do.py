@@ -52,20 +52,20 @@ class SysRoleMenu(Base):
     menu_id = Column(Integer, primary_key=True, nullable=False, comment='菜单ID')
 
 
-class SysAgent(Base):
-    """
-    智能体信息表
-    """
+# class SysAgent(Base):
+#     """
+#     智能体信息表
+#     """
 
-    __tablename__ = 'sys_agent'
+#     __tablename__ = 'sys_agent'
 
-    graph_id = Column(String(100), primary_key=True, nullable=False, comment='langgraph的graph_id，UUID字符串')
-    assistant_id = Column(String(100), nullable=False, comment='langgraph的assistant_id，UUID字符串')
-    name = Column(String(100), nullable=False, comment='智能体名字')
-    description = Column(String(500), default='', comment='智能体描述')
-    remark = Column(String(500), default=None, comment='备注')
-    created_by = Column(String(64), default='admin', comment='创建者')
-    status = Column(String(1), default='0', comment='智能体状态（0正常,1停用）')
+#     graph_id = Column(String(100), primary_key=True, nullable=False, comment='langgraph的graph_id，UUID字符串')
+#     assistant_id = Column(String(100), nullable=False, comment='langgraph的assistant_id，UUID字符串')
+#     name = Column(String(100), nullable=False, comment='智能体名字')
+#     description = Column(String(500), default='', comment='智能体描述')
+#     remark = Column(String(500), default=None, comment='备注')
+#     created_by = Column(String(64), default='admin', comment='创建者')
+#     status = Column(String(1), default='0', comment='智能体状态（0正常,1停用）')
 
 
 class SysRoleAgent(Base):

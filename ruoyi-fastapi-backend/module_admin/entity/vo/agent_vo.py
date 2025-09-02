@@ -1,10 +1,15 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic.alias_generators import to_camel
 from typing import Optional, List
 from datetime import datetime
 
 
 class AgentModel(BaseModel):
-    """智能体详情模型"""
+    """
+    智能体表对应的pydantic模型
+    """
+    model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
+
     # id: int = Field(..., description="智能体ID")
     graph_id: Optional[str] = Field(None, description="智能体图ID") 
     name: Optional[str] = Field(None, description="智能体名称")
@@ -19,6 +24,9 @@ class AgentModel(BaseModel):
 
 class AgentQueryModel(AgentModel):
     """智能体搜索请求模型"""
+
+    model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
+
     limit: Optional[int] = Field(5, description="返回记录数限制", ge=1, le=100)
     offset: Optional[int] = Field(0, description="偏移量", ge=0)
 

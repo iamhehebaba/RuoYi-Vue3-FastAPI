@@ -3,6 +3,7 @@ from typing import List, Dict, Any
 from module_admin.dao.agent_dao import AgentDao
 from module_admin.entity.vo.agent_vo import AgentQueryModel
 from module_admin.entity.do.agent_do import SysAgent
+from utils.common_util import CamelCaseUtil
 from loguru import logger
 
 
@@ -39,10 +40,7 @@ class AgentService:
         """
 
         agent_list = await AgentDao.get_agent_list(db, query_request, agent_scope_sql)
-
-        # todo: maybe need to do transformation by calling CamelCaseUtil.transform_result if necessary by frontend
-        return agent_list
-
+        return CamelCaseUtil.transform_result(agent_list)
 
     @classmethod
     async def search_agents(cls, db: AsyncSession, role_ids: List[int], request: AgentQueryModel) -> List[Dict[str, Any]]:

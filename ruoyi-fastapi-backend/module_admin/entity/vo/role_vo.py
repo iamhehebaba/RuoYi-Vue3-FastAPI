@@ -156,3 +156,38 @@ class DeleteRoleModel(BaseModel):
     role_ids: str = Field(description='需要删除的菜单ID')
     update_by: Optional[str] = Field(default=None, description='更新者')
     update_time: Optional[datetime] = Field(default=None, description='更新时间')
+
+
+class RoleAgentModel(BaseModel):
+    """
+    角色和智能体关联表对应pydantic模型
+    """
+
+    model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
+
+    role_id: Optional[int] = Field(default=None, description='角色ID')
+    graph_id: Optional[str] = Field(default=None, description='智能体graph_id')
+
+
+@as_query
+class RoleAgentQueryModel(BaseModel):
+    """
+    角色智能体分页查询模型
+    """
+
+    model_config = ConfigDict(alias_generator=to_camel)
+
+    role_id: Optional[int] = Field(default=None, description='角色ID')
+    page_num: int = Field(default=1, description='当前页码')
+    page_size: int = Field(default=10, description='每页记录数')
+
+
+class AddRoleAgentModel(BaseModel):
+    """
+    新增/编辑角色智能体关联模型
+    """
+
+    model_config = ConfigDict(alias_generator=to_camel)
+
+    role_id: int = Field(description='角色ID')
+    graph_ids: List[str] = Field(description='智能体graph_id列表')

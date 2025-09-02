@@ -9,6 +9,7 @@ from exceptions.exception import ServiceException
 from module_admin.dao.user_dao import UserDao
 from module_admin.entity.vo.common_vo import CrudResponseModel
 from module_admin.entity.vo.post_vo import PostPageQueryModel
+from module_admin.entity.vo.agent_vo import AgentQueryModel
 from module_admin.entity.vo.user_vo import (
     AddUserModel,
     CrudUserRoleModel,
@@ -31,6 +32,7 @@ from module_admin.service.config_service import ConfigService
 from module_admin.service.dept_service import DeptService
 from module_admin.service.post_service import PostService
 from module_admin.service.role_service import RoleService
+from module_admin.service.agent_service import AgentService
 from utils.common_util import CamelCaseUtil
 from utils.excel_util import ExcelUtil
 from utils.page_util import PageResponseModel
@@ -637,3 +639,25 @@ class UserService:
         user_role = await UserDao.get_user_role_detail(query_db, page_object)
 
         return user_role
+
+
+    @classmethod
+    async def check_user_agent_scope_services(cls, query_db: AsyncSession, current_user: CurrentUserModel, target_agent_id_list: List[str]):
+        """
+        校验当前用户是否对于指定的智能体有操作权限
+        
+        :param query_db: orm对象
+        :param current_user: 当前用户
+        :param agent_id_list: 智能体id列表
+        :return: 校验结果
+        """
+        # 校验目标智能体是否存在
+        all_agent_list = await AgentService.get_agent_list_service(query_db, AgentQueryModel(), '1==1')
+        if not set(target_agent_id_list).issubset(set([agent['graphId'] for agent in all_agent_list])):
+            raise ServiceException(message='指定的智能体不存在')
+
+        if current_user.user.admin:
+            return
+        if not set(target_agent_id_list).issubset(set(current_user.user.agent_ids)):
+            raise ServiceException(message=f'当前用户没有权限访问所有的智能体:{target_agent_id_list}')
+    

@@ -8,7 +8,7 @@ from module_admin.annotation.log_annotation import Log
 from module_admin.aspect.data_scope import GetDataScope
 from module_admin.aspect.interface_auth import CheckUserInterfaceAuth
 from module_admin.entity.vo.dept_vo import DeptModel
-from module_admin.entity.vo.role_vo import AddRoleModel, DeleteRoleModel, RoleModel, RolePageQueryModel
+from module_admin.entity.vo.role_vo import AddRoleModel, DeleteRoleModel, RoleModel, RolePageQueryModel, AddRoleAgentModel, RoleAgentQueryModel
 from module_admin.entity.vo.user_vo import CrudUserRoleModel, CurrentUserModel, UserRolePageQueryModel
 from module_admin.service.dept_service import DeptService
 from module_admin.service.login_service import LoginService
@@ -18,6 +18,7 @@ from utils.common_util import bytes2file_response
 from utils.log_util import logger
 from utils.page_util import PageResponseModel
 from utils.response_util import ResponseUtil
+from module_admin.aspect.agent_scope import GetAgentScope
 
 
 roleController = APIRouter(prefix='/system/role', dependencies=[Depends(LoginService.get_current_user)])
@@ -281,3 +282,57 @@ async def batch_cancel_system_role_user(
     logger.info(batch_cancel_user_role_result.message)
 
     return ResponseUtil.success(msg=batch_cancel_user_role_result.message)
+
+
+# 为角色添加智能体，需要角色添加、角色编辑的权限
+@roleController.put('/agent', dependencies=[Depends(CheckUserInterfaceAuth(['system:role:add', 'system:role:edit'], False))])
+@Log(title='角色管理', business_type=BusinessType.GRANT)
+async def add_system_role_agent(
+    request: Request,
+    add_role_agent: AddRoleAgentModel,
+    query_db: AsyncSession = Depends(get_db),
+    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
+    data_scope_sql: str = Depends(GetDataScope('SysDept')),
+):
+    """ 
+    保存角色和智能体的关联关系
+    """
+    # 原来的检查仍然需要
+    await RoleService.check_target_roles_operatable(query_db, [add_role_agent.role_id])
+    if not current_user.user.admin:
+        await RoleService.check_role_data_scope_services(query_db, str(add_role_agent.role_id), data_scope_sql)
+
+    # 新增检查：当前用户是否有操作这些智能体的权限
+    await UserService.check_user_agent_scope_services(query_db, current_user, add_role_agent.graph_ids)
+    add_role_agent_result = await RoleService.add_role_agent_services(query_db, add_role_agent)
+    logger.info(add_role_agent_result.message)
+
+    return ResponseUtil.success(msg=add_role_agent_result.message)
+
+# 查询某个角色所分配的智能体列表
+@roleController.get(
+    '/agent/allocatedList',
+    response_model=PageResponseModel,
+    dependencies=[Depends(CheckUserInterfaceAuth(['system:role:add', 'system:role:edit'], False))],
+)
+async def get_system_role_agent_allocated_list(
+    request: Request,
+    role_agent_query: RoleAgentQueryModel = Depends(RoleAgentQueryModel.as_query),
+    query_db: AsyncSession = Depends(get_db),
+    data_scope_sql: str = Depends(GetDataScope('SysDept')),
+    agent_scope_sql: str = Depends(GetAgentScope('SysAgent')),
+):
+    """
+    获取指定角色的智能体列表
+    """
+
+    # await RoleService.check_role_allowed_services(role_data_scope)
+    # if not current_user.user.admin:
+    #     await RoleService.check_role_data_scope_services(query_db, str(role_data_scope.role_id), data_scope_sql)
+
+    role_agent_allocated_list_result = await RoleService.get_role_agent_allocated_list_services(
+        query_db, role_agent_query, is_page=True
+    )
+    logger.info('获取成功')
+
+    return ResponseUtil.success(model_content=role_agent_allocated_list_result)

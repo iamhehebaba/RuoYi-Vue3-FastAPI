@@ -36,12 +36,12 @@ class AgentDao:
         return agent_info
 
     @classmethod
-    async def get_agent_list(cls, db: AsyncSession, request: AgentQueryModel, agent_scope_sql: str):
+    async def get_agent_list(cls, db: AsyncSession, agent_query: AgentQueryModel, agent_scope_sql: str):
         """
         获取所有智能体列表
 
         :param db: orm对象
-        :param request: 搜索请求参数
+        :param agent_query: 搜索请求参数
         :return: 智能体列表信息
         """
         agent_result = (
@@ -49,9 +49,9 @@ class AgentDao:
                 await db.execute(
                     select(SysAgent)
                     .where(
-                        SysAgent.graph_id == request.graph_id if request.graph_id is not None else True,
-                        SysAgent.status == request.status if request.status else True,
-                        SysAgent.name.like(f'%{request.name}%') if request.name else True,
+                        SysAgent.graph_id == agent_query.graph_id if agent_query.graph_id is not None else True,
+                        SysAgent.status == agent_query.status if agent_query.status else True,
+                        SysAgent.name.like(f'%{agent_query.name}%') if agent_query.name else True,
                         eval(agent_scope_sql),
                     )
                     .order_by(SysAgent.order_num)
