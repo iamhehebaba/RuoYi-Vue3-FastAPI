@@ -760,7 +760,7 @@ create table sys_agent (
 ) engine=innodb comment = '智能体表';
 
 insert into sys_agent values('general_chatbot', '', '通用聊天智能体', '通用聊天智能体', '通用聊天智能体', 'admin', '0', 1, sysdate());
-insert into sys_agent values('ppt_master', '', 'PPT大师', 'PPT大师', 'PPT大师', 'admin', '0', 1, sysdate());
+insert into sys_agent values('ppt_master', '', 'PPT大师', 'PPT大师', 'PPT大师', 'admin', '0', 2, sysdate());
 
 
 -- ----------------------------

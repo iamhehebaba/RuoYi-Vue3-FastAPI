@@ -1102,7 +1102,7 @@ comment on column sys_agent.status is '智能体状态（0正常,1停用）';
 comment on table sys_agent is '智能体表';
 
 insert into sys_agent values('general_chatbot', '', '通用聊天智能体', '通用聊天智能体', '通用聊天智能体', 'admin', '0', 1, sysdate());
-insert into sys_agent values('ppt_master', '', 'PPT大师', 'PPT大师', 'PPT大师', 'admin', '0', 1, sysdate());
+insert into sys_agent values('ppt_master', '', 'PPT大师', 'PPT大师', 'PPT大师', 'admin', '0', 2, sysdate());
 
 
 -- ----------------------------
