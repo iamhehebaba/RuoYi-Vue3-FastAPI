@@ -7,10 +7,13 @@ from module_admin.entity.vo.role_vo import (
     AddRoleModel,
     DeleteRoleModel,
     RoleDeptModel,
-    RoleDeptQueryModel,
     RoleMenuModel,
     RoleModel,
     RolePageQueryModel,
+    RoleQueryModel,
+    RoleAgentModel,
+    RoleAgentQueryModel,
+    AddRoleAgentModel,
 )
 from module_admin.entity.vo.user_vo import UserInfoModel, UserRolePageQueryModel
 from module_admin.dao.role_dao import RoleDao
@@ -82,6 +85,20 @@ class RoleService:
             raise ServiceException(message='不允许操作超级管理员角色')
         else:
             return CrudResponseModel(is_success=True, message='校验通过')
+
+    @classmethod
+    async def check_target_roles_operatable(cls, query_db: AsyncSession, target_role_ids: List[int]):
+        """
+        校验目标角色是否允许被操作，比如，超级管理员不可以被执行任何操作，类似的操作包括：给超级管理员赋予某些智能体
+        :param target_role_ids: 目标角色id列表
+        """
+        if 1 in target_role_ids:
+            raise ServiceException(message='不允许操作超级管理员角色')
+
+        # 校验目标角色是否存在
+        all_role_list = await RoleDao.get_role_list(query_db, RolePageQueryModel(), '1==1', is_page=False)
+        if not set(target_role_ids).issubset(set([role['roleId'] for role in all_role_list])):
+            raise ServiceException(message='有角色不存在')
 
     @classmethod
     async def check_role_data_scope_services(cls, query_db: AsyncSession, role_ids: str, data_scope_sql: str):
@@ -354,3 +371,55 @@ class RoleService:
         )
 
         return unallocated_list
+
+    @classmethod
+    async def add_role_agent_services(cls, query_db: AsyncSession, page_object: AddRoleAgentModel):
+        """
+        保存角色和智能体的关联关系service
+
+        :param query_db: orm对象
+        :param page_object: 角色智能体关联对象
+        :return: 保存结果
+        """
+        role_info = await cls.role_detail_services(query_db, page_object.role_id)
+        if role_info.role_id:
+            try:
+                # 先删除该角色的所有智能体关联
+                await RoleDao.delete_role_agent_dao(query_db, page_object.role_id)
+                # 添加新的关联关系
+                if page_object.graph_ids:
+                    for graph_id in page_object.graph_ids:
+                        await RoleDao.add_role_agent_dao(
+                            query_db, RoleAgentModel(roleId=page_object.role_id, graphId=graph_id)
+                        )
+                await query_db.commit()
+                return CrudResponseModel(is_success=True, message='保存成功')
+            except Exception as e:
+                await query_db.rollback()
+                raise e
+        else:
+            raise ServiceException(message='角色不存在')
+
+    @classmethod
+    async def get_role_agent_allocated_list_services(
+        cls, query_db: AsyncSession, page_object: RoleAgentQueryModel, is_page: bool = False
+    ):
+        """
+        根据角色id获取已分配智能体列表
+
+        :param query_db: orm对象
+        :param page_object: 角色智能体查询对象
+        :param is_page: 是否开启分页
+        :return: 已分配智能体列表
+        """
+        query_agent_list = await RoleDao.get_role_agent_allocated_list(
+            query_db, page_object, is_page
+        )
+        allocated_list = PageResponseModel(
+            **{
+                **query_agent_list.model_dump(by_alias=True),
+                'rows': [RoleAgentModel(**row) for row in query_agent_list.rows],
+            }
+        )
+
+        return allocated_list

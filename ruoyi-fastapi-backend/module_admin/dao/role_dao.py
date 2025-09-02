@@ -3,9 +3,9 @@ from sqlalchemy import and_, delete, desc, func, or_, select, update  # noqa: F4
 from sqlalchemy.ext.asyncio import AsyncSession
 from module_admin.entity.do.dept_do import SysDept
 from module_admin.entity.do.menu_do import SysMenu
-from module_admin.entity.do.role_do import SysRole, SysRoleMenu, SysRoleDept
+from module_admin.entity.do.role_do import SysRole, SysRoleMenu, SysRoleDept, SysRoleAgent
 from module_admin.entity.do.user_do import SysUser, SysUserRole
-from module_admin.entity.vo.role_vo import RoleDeptModel, RoleMenuModel, RoleModel, RolePageQueryModel
+from module_admin.entity.vo.role_vo import RoleDeptModel, RoleMenuModel, RoleModel, RolePageQueryModel, RoleAgentModel, RoleAgentQueryModel
 from utils.page_util import PageUtil
 
 
@@ -336,3 +336,48 @@ class RoleDao:
         ).scalar()
 
         return user_count
+
+    @classmethod
+    async def add_role_agent_dao(cls, db: AsyncSession, role_agent: RoleAgentModel):
+        """
+        新增角色智能体关联信息数据库操作
+
+        :param db: orm对象
+        :param role_agent: 角色智能体关联对象
+        :return:
+        """
+        db_role_agent = SysRoleAgent(**role_agent.model_dump())
+        db.add(db_role_agent)
+
+    @classmethod
+    async def delete_role_agent_dao(cls, db: AsyncSession, role_id: int):
+        """
+        删除角色智能体关联信息数据库操作
+
+        :param db: orm对象
+        :param role_id: 角色id
+        :return:
+        """
+        await db.execute(delete(SysRoleAgent).where(SysRoleAgent.role_id == role_id))
+
+    @classmethod
+    async def get_role_agent_allocated_list(cls, db: AsyncSession, query_object: RoleAgentQueryModel, is_page: bool = False):
+        """
+        根据角色id获取角色智能体关联列表信息
+
+        :param db: orm对象
+        :param query_object: 查询参数对象
+        :param is_page: 是否开启分页
+        :return: 角色智能体关联列表信息
+        """
+        query = (
+            select(SysRoleAgent)
+            .where(
+                SysRoleAgent.role_id == query_object.role_id if query_object.role_id is not None else True,
+            )
+            .order_by(SysRoleAgent.role_id)
+            .distinct()
+        )
+        role_agent_list = await PageUtil.paginate(db, query, query_object.page_num, query_object.page_size, is_page)
+
+        return role_agent_list
