@@ -31,7 +31,8 @@ class ThreadDao:
         :return: 创建的thread对象
         """
         db.add(thread)
-        await db.flush()
+        await db.commit()
+        await db.refresh(thread)
         return thread
 
     @classmethod

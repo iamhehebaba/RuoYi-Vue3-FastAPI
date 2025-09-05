@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Dict, Any, Optional
 from module_admin.dao.thread_dao import ThreadDao
 from module_admin.entity.do.thread_do import LanggraphThread
-from module_admin.entity.vo.thread_vo import ThreadCreateModel, ThreadResponseModel
+from module_admin.entity.vo.thread_vo import ThreadCreateModel, ThreadCreateResponseModel, RunCreateModel
 from module_admin.entity.vo.common_vo import CrudResponseModel
 from utils.common_util import CamelCaseUtil, SnakeCaseUtil
 from loguru import logger
@@ -125,4 +125,131 @@ class ThreadService:
             return CamelCaseUtil.transform_result(threads)
         except Exception as e:
             logger.error(f"根据创建者获取thread列表失败: {e}")
+            raise e
+
+    @classmethod
+    async def create_run_service(cls, thread_id: str, request: RunCreateModel) -> Dict[str, Any]:
+        """
+        运行thread
+
+        :param thread_id: thread ID
+        :param request: 运行thread请求
+        :return: 运行结果
+        """
+        try:
+            # # 将camelCase请求转换为snake_case
+            # snake_case_request = SnakeCaseUtil.transform_result(request.model_dump())
+            
+            # 调用langgraph_api服务
+            langgraph_api_url = os.getenv('LANGGRAPH_API_URL', 'http://localhost:8000')
+            api_url = f"{langgraph_api_url}/threads/{thread_id}/runs"
+            
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    api_url,
+                    json=request.model_dump(),
+                    headers={"Content-Type": "application/json"}
+                )
+                
+                if response.status_code != 200:
+                    logger.error(f"调用langgraph_api失败: {response.status_code} - {response.text}")
+                    raise Exception(f"调用langgraph_api失败: {response.status_code}")
+                
+                api_response = response.json()
+                logger.info(f"langgraph_api响应: {api_response}")
+
+            # 将snake_case响应转换回camelCase
+            camel_result = CamelCaseUtil.transform_result(api_response)
+            return camel_result
+            
+        except httpx.TimeoutException:
+            logger.error("调用langgraph_api超时")
+            raise Exception("调用langgraph_api超时")
+        except httpx.RequestError as e:
+            logger.error(f"调用langgraph_api请求错误: {e}")
+            raise Exception(f"调用langgraph_api请求错误: {str(e)}")
+        except Exception as e:
+            logger.error(f"运行thread失败: {e}")
+            raise e
+
+    @classmethod
+    async def get_run_status_service(cls, thread_id: str, run_id: str) -> Dict[str, Any]:
+        """
+        获取运行状态
+
+        :param thread_id: thread ID
+        :param run_id: run ID
+        :return: 运行状态信息
+        """
+        try:
+            # 调用langgraph_api服务
+            langgraph_api_url = os.getenv('LANGGRAPH_API_URL', 'http://localhost:8000')
+            api_url = f"{langgraph_api_url}/threads/{thread_id}/runs/{run_id}"
+            
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.get(
+                    api_url,
+                    headers={"Content-Type": "application/json"}
+                )
+                
+                if response.status_code != 200:
+                    logger.error(f"调用langgraph_api失败: {response.status_code} - {response.text}")
+                    raise Exception(f"调用langgraph_api失败: {response.status_code}")
+                
+                api_response = response.json()
+                logger.info(f"langgraph_api响应: {api_response}")
+
+            # 将snake_case响应转换回camelCase
+            camel_result = CamelCaseUtil.transform_result(api_response)
+            return camel_result
+            
+        except httpx.TimeoutException:
+            logger.error("调用langgraph_api超时")
+            raise Exception("调用langgraph_api超时")
+        except httpx.RequestError as e:
+            logger.error(f"调用langgraph_api请求错误: {e}")
+            raise Exception(f"调用langgraph_api请求错误: {str(e)}")
+        except Exception as e:
+            logger.error(f"获取运行状态失败: {e}")
+            raise e
+
+    @classmethod
+    async def get_run_result_service(cls, thread_id: str, run_id: str) -> Dict[str, Any]:
+        """
+        获取运行结果
+
+        :param thread_id: thread ID
+        :param run_id: run ID
+        :return: 运行结果信息
+        """
+        try:
+            # 调用langgraph_api服务
+            langgraph_api_url = os.getenv('LANGGRAPH_API_URL', 'http://localhost:8000')
+            api_url = f"{langgraph_api_url}/threads/{thread_id}/runs/{run_id}/join"
+            
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.get(
+                    api_url,
+                    headers={"Content-Type": "application/json"}
+                )
+                
+                if response.status_code != 200:
+                    logger.error(f"调用langgraph_api失败: {response.status_code} - {response.text}")
+                    raise Exception(f"调用langgraph_api失败: {response.status_code}")
+                
+                api_response = response.json()
+                logger.info(f"langgraph_api响应: {api_response}")
+
+            # 将snake_case响应转换回camelCase
+            camel_result = CamelCaseUtil.transform_result(api_response)
+            return camel_result
+            
+        except httpx.TimeoutException:
+            logger.error("调用langgraph_api超时")
+            raise Exception("调用langgraph_api超时")
+        except httpx.RequestError as e:
+            logger.error(f"调用langgraph_api请求错误: {e}")
+            raise Exception(f"调用langgraph_api请求错误: {str(e)}")
+        except Exception as e:
+            logger.error(f"获取运行结果失败: {e}")
             raise e

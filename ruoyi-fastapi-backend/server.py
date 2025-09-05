@@ -52,6 +52,7 @@ app = FastAPI(
     description=f'{AppConfig.app_name}接口文档',
     version=AppConfig.app_version,
     lifespan=lifespan,
+    root_path=AppConfig.app_root_path,
 )
 
 # 挂载子应用

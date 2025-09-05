@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from config.get_db import get_db
 from module_admin.aspect.interface_auth import CheckUserInterfaceAuth
 from module_admin.entity.vo.agent_vo import AgentQueryModel
-from module_admin.entity.vo.thread_vo import ThreadCreateModel
+from module_admin.entity.vo.thread_vo import ThreadCreateModel, RunCreateModel
 from module_admin.entity.vo.user_vo import CurrentUserModel
 from module_admin.service.agent_service import AgentService
 from module_admin.service.thread_service import ThreadService
@@ -41,7 +41,7 @@ async def search_agents(
 
 
 @agentController.post('/threads')
-async def create_thread(
+async def create_run(
     request: Request,
     thread_request: ThreadCreateModel,
     db: AsyncSession = Depends(get_db),
@@ -68,5 +68,89 @@ async def create_thread(
     except Exception as e:
         logger.error(f"创建thread失败: {e}")
         return ResponseUtil.error(msg=f"创建thread失败: {str(e)}")
+
+
+@agentController.post('/threads/{thread_id}/runs')
+async def create_run(
+    request: Request,
+    thread_id: str,
+    run_request: RunCreateModel,
+    current_user: CurrentUserModel = Depends(LoginService.get_current_user)
+):
+    """
+    运行thread
+    """
+    try:
+        # 运行thread
+        run_result = await ThreadService.create_run_service(
+            thread_id, 
+            run_request
+        )
+        
+        logger.info(f"用户 {current_user.user.get_user_name()} 成功创建了一个run: {run_result.get('runId')}")
+        
+        return ResponseUtil.success(data=run_result, msg="Run创建成功")
+        
+    except Exception as e:
+        logger.error(f"运行thread失败: {e}")
+        return ResponseUtil.error(msg=f"运行thread失败: {str(e)}")
+
+
+@agentController.get('/threads/{thread_id}/runs/{run_id}')
+async def get_run_status(
+    request: Request,
+    thread_id: str,
+    run_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUserModel = Depends(LoginService.get_current_user)
+):
+    """
+    获取运行状态
+    """
+    try:
+        # 获取thread信息进行权限验证
+        thread_info = await ThreadService.get_thread_by_id_service(db, thread_id)
+        if not thread_info:
+            return ResponseUtil.error(msg="Thread不存在")
+        
+        # 验证用户对智能体的访问权限
+        graph_id = thread_info.get('graphId')
+        await AgentService.check_user_agent_scope_services(db, current_user, [graph_id])
+        
+        # 调用服务层方法
+        result = await ThreadService.get_run_status_service(thread_id, run_id)
+        return ResponseUtil.success(data=result)
+    except Exception as e:
+        logger.error(f"获取运行状态失败: {e}")
+        return ResponseUtil.error(msg=f"获取运行状态失败: {str(e)}")
+
+
+@agentController.get('/threads/{thread_id}/runs/{run_id}/join')
+async def get_run_result(
+    request: Request,
+    thread_id: str,
+    run_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUserModel = Depends(LoginService.get_current_user)
+):
+    """
+    获取运行结果
+    """
+    try:
+        # 获取thread信息进行权限验证
+        thread_info = await ThreadService.get_thread_by_id_service(db, thread_id)
+        if not thread_info:
+            return ResponseUtil.error(msg="Thread不存在")
+        
+        # 验证用户对智能体的访问权限
+        graph_id = thread_info.get('graphId')
+        await AgentService.check_user_agent_scope_services(db, current_user, [graph_id])
+        
+        # 调用服务层方法
+        result = await ThreadService.get_run_result_service(thread_id, run_id)
+        return ResponseUtil.success(data=result)
+    except Exception as e:
+        logger.error(f"获取运行结果失败: {e}")
+        return ResponseUtil.error(msg=f"获取运行结果失败: {str(e)}")
 
 
