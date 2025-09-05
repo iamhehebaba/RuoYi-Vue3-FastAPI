@@ -64,14 +64,14 @@ class ThreadService:
             logger.info(f"Thread记录已保存到数据库: {thread_record.thread_id}")
             await db.commit()
             return camel_result
-        except httpx.TimeoutException:
+        except httpx.TimeoutException as e:
             logger.error("调用langgraph_api超时")
             await db.rollback()
-            raise Exception("调用langgraph_api超时")
+            raise e
         except httpx.RequestError as e:
             logger.error(f"调用langgraph_api请求错误: {e}")
             await db.rollback()
-            raise Exception(f"调用langgraph_api请求错误: {str(e)}")
+            raise e
         except Exception as e:
             logger.error(f"创建thread失败: {e}")
             await db.rollback()
@@ -164,10 +164,10 @@ class ThreadService:
             
         except httpx.TimeoutException:
             logger.error("调用langgraph_api超时")
-            raise Exception("调用langgraph_api超时")
+            raise e
         except httpx.RequestError as e:
             logger.error(f"调用langgraph_api请求错误: {e}")
-            raise Exception(f"调用langgraph_api请求错误: {str(e)}")
+            raise e
         except Exception as e:
             logger.error(f"运行thread失败: {e}")
             raise e
@@ -205,10 +205,10 @@ class ThreadService:
             
         except httpx.TimeoutException:
             logger.error("调用langgraph_api超时")
-            raise Exception("调用langgraph_api超时")
+            raise e
         except httpx.RequestError as e:
             logger.error(f"调用langgraph_api请求错误: {e}")
-            raise Exception(f"调用langgraph_api请求错误: {str(e)}")
+            raise e
         except Exception as e:
             logger.error(f"获取运行状态失败: {e}")
             raise e
@@ -246,10 +246,10 @@ class ThreadService:
             
         except httpx.TimeoutException:
             logger.error("调用langgraph_api超时")
-            raise Exception("调用langgraph_api超时")
+            raise e
         except httpx.RequestError as e:
             logger.error(f"调用langgraph_api请求错误: {e}")
-            raise Exception(f"调用langgraph_api请求错误: {str(e)}")
+            raise e
         except Exception as e:
             logger.error(f"获取运行结果失败: {e}")
             raise e

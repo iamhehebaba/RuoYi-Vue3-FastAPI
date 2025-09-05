@@ -327,10 +327,6 @@ async def get_system_role_agent_allocated_list(
     获取指定角色的智能体列表
     """
 
-    # await RoleService.check_role_allowed_services(role_data_scope)
-    # if not current_user.user.admin:
-    #     await RoleService.check_role_data_scope_services(query_db, str(role_data_scope.role_id), data_scope_sql)
-
     role_agent_allocated_list_result = await RoleService.get_role_agent_allocated_list_services(
         query_db, role_agent_query, is_page=True
     )

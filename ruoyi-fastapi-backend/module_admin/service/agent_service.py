@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 from module_admin.dao.agent_dao import AgentDao
 from module_admin.entity.vo.agent_vo import AgentQueryModel
 from module_admin.entity.do.agent_do import SysAgent
-from exceptions.exception import ServiceException
+from exceptions.exception import ServiceException, PermissionException
 from utils.common_util import CamelCaseUtil
 from module_admin.entity.vo.user_vo import CurrentUserModel
 from loguru import logger
@@ -27,7 +27,7 @@ class AgentService:
             agent_info = await AgentDao.get_agent_by_graph_id(db, graph_id)
             return agent_info
         except Exception as e:
-            logger.error(f"根据graph_id获取智能体信息失败: {e}")
+            logger.error(f"获取智能体信息失败: {e}")
             raise e
 
     @classmethod
@@ -115,5 +115,5 @@ class AgentService:
         if current_user.user.admin:
             return
         if not set(target_agent_id_list).issubset(set(current_user.user.agent_ids)):
-            raise ServiceException(message=f'当前用户没有权限访问所有的智能体:{target_agent_id_list}')
+            raise PermissionException(data='', message=f'当前用户没有权限访问所有的智能体:{target_agent_id_list}')
                 
