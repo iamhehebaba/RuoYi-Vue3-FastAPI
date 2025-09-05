@@ -53,7 +53,7 @@ async def create_run(
     thread_result = await ThreadService.create_thread_service(
         db, 
         thread_request, 
-        current_user.user.user_id
+        current_user.user.get_user_name()
     )
     
     logger.info(f"用户 {current_user.user.get_user_name()} 成功创建thread: {thread_result.get('threadId')}")
