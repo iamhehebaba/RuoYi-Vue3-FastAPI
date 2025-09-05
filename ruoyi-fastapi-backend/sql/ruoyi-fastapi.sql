@@ -776,3 +776,16 @@ create table sys_role_agent (
 insert into sys_role_agent values(2, 'general_chatbot');
 insert into sys_role_agent values(2, 'ppt_master');
 
+
+-- ----------------------------
+-- 22、langgraph thread表
+-- ----------------------------
+drop table if exists langgraph_thread;
+create table langgraph_thread (
+  thread_id         varchar(100)    not null                   comment 'langgraph的thread_id，UUID字符串',
+  graph_id          varchar(100)    not null                   comment 'langgraph的graph_id，UUID字符串',
+  assistant_id      varchar(100)                               comment 'langgraph的assistant_id，UUID字符串',
+  created_by        varchar(64)     default 'admin'            comment '创建者',
+  created_at        datetime                                   comment '创建时间',
+  primary key (thread_id)
+) engine=innodb comment = 'langgraph thread表';

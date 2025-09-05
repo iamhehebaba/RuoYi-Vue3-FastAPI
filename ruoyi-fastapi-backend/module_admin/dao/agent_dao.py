@@ -3,6 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from module_admin.entity.do.agent_do import SysAgent
+from module_admin.entity.do.role_do import SysRoleAgent
 from module_admin.entity.vo.agent_vo import AgentQueryModel
 
 
@@ -74,8 +75,10 @@ class AgentDao:
         :param request: 搜索请求参数
         :return: 智能体列表信息，按name排序
         """
-        query = select(SysAgent).where(
-            SysAgent.role_id.in_(role_ids)
+        query = select(SysAgent).join(
+            SysRoleAgent, SysAgent.graph_id == SysRoleAgent.graph_id
+        ).where(
+            SysRoleAgent.role_id.in_(role_ids)
         )
         
         # 如果指定了graph_id，添加过滤条件
@@ -103,8 +106,10 @@ class AgentDao:
         """
         from sqlalchemy import func
         
-        query = select(func.count(SysAgent.id)).where(
-            SysAgent.role_id.in_(role_ids)
+        query = select(func.count(SysAgent.id)).join(
+            SysRoleAgent, SysAgent.graph_id == SysRoleAgent.graph_id
+        ).where(
+            SysRoleAgent.role_id.in_(role_ids)
         )
         
         # 如果指定了graph_id，添加过滤条件
@@ -113,3 +118,23 @@ class AgentDao:
         
         count = (await db.execute(query)).scalar()
         return count or 0
+
+    @classmethod
+    async def validate_agent_access_dao(cls, db: AsyncSession, graph_id: str, role_ids: List[int]) -> bool:
+        """
+        验证用户是否有权限访问指定智能体
+
+        :param db: orm对象
+        :param graph_id: 智能体graph_id
+        :param role_ids: 用户角色ID列表
+        :return: 是否有权限访问
+        """
+        from sqlalchemy import func
+        
+        query = select(func.count(SysRoleAgent.role_id)).where(
+            SysRoleAgent.graph_id == graph_id,
+            SysRoleAgent.role_id.in_(role_ids)
+        )
+        
+        count = (await db.execute(query)).scalar()
+        return count > 0
