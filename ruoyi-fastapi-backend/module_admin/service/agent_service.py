@@ -3,7 +3,9 @@ from typing import List, Dict, Any
 from module_admin.dao.agent_dao import AgentDao
 from module_admin.entity.vo.agent_vo import AgentQueryModel
 from module_admin.entity.do.agent_do import SysAgent
+from exceptions.exception import ServiceException, PermissionException
 from utils.common_util import CamelCaseUtil
+from module_admin.entity.vo.user_vo import CurrentUserModel
 from loguru import logger
 
 
@@ -25,7 +27,7 @@ class AgentService:
             agent_info = await AgentDao.get_agent_by_graph_id(db, graph_id)
             return agent_info
         except Exception as e:
-            logger.error(f"根据graph_id获取智能体信息失败: {e}")
+            logger.error(f"获取智能体信息失败: {e}")
             raise e
 
     @classmethod
@@ -63,7 +65,6 @@ class AgentService:
                     "graph_id": agent.graph_id,
                     "name": agent.name,
                     "description": agent.description,
-                    "role_id": agent.role_id,
                     "status": agent.status,
                     "created_at": agent.created_at.isoformat() if agent.created_at else None,
                     "created_by": agent.created_by,
@@ -89,13 +90,30 @@ class AgentService:
         :return: 是否有权限访问
         """
         try:
-            agent = await AgentDao.get_agent_by_graph_id(db, graph_id)
-            if not agent:
-                return False
-            
-            # 检查用户角色是否有权限访问该智能体
-            return agent.role_id in role_ids
+            # 调用DAO层的验证方法
+            return await AgentDao.validate_agent_access_dao(db, graph_id, role_ids)
             
         except Exception as e:
             logger.error(f"验证智能体访问权限失败: {e}")
             return False
+
+    @classmethod
+    async def check_user_agent_scope_services(cls, query_db: AsyncSession, current_user: CurrentUserModel, target_agent_id_list: List[str]):
+        """
+        校验当前用户是否对于指定的智能体有操作权限
+        
+        :param query_db: orm对象
+        :param current_user: 当前用户
+        :param agent_id_list: 智能体id列表
+        :return: 校验结果
+        """
+        # 校验目标智能体是否存在
+        all_agent_list = await AgentService.get_agent_list_service(query_db, AgentQueryModel(), '1==1')
+        if not set(target_agent_id_list).issubset(set([agent['graphId'] for agent in all_agent_list])):
+            raise ServiceException(message='指定的智能体不存在')
+
+        if current_user.user.admin:
+            return
+        if not set(target_agent_id_list).issubset(set(current_user.user.agent_ids)):
+            raise PermissionException(data='', message=f'当前用户没有权限访问所有的智能体:{target_agent_id_list}')
+                

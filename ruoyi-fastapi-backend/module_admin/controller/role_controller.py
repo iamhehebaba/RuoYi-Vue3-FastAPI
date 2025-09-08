@@ -14,6 +14,7 @@ from module_admin.service.dept_service import DeptService
 from module_admin.service.login_service import LoginService
 from module_admin.service.role_service import RoleService
 from module_admin.service.user_service import UserService
+from module_admin.service.agent_service import AgentService
 from utils.common_util import bytes2file_response
 from utils.log_util import logger
 from utils.page_util import PageResponseModel
@@ -303,7 +304,7 @@ async def add_system_role_agent(
         await RoleService.check_role_data_scope_services(query_db, str(add_role_agent.role_id), data_scope_sql)
 
     # 新增检查：当前用户是否有操作这些智能体的权限
-    await UserService.check_user_agent_scope_services(query_db, current_user, add_role_agent.graph_ids)
+    await AgentService.check_user_agent_scope_services(query_db, current_user, add_role_agent.graph_ids)
     add_role_agent_result = await RoleService.add_role_agent_services(query_db, add_role_agent)
     logger.info(add_role_agent_result.message)
 
@@ -325,10 +326,6 @@ async def get_system_role_agent_allocated_list(
     """
     获取指定角色的智能体列表
     """
-
-    # await RoleService.check_role_allowed_services(role_data_scope)
-    # if not current_user.user.admin:
-    #     await RoleService.check_role_data_scope_services(query_db, str(role_data_scope.role_id), data_scope_sql)
 
     role_agent_allocated_list_result = await RoleService.get_role_agent_allocated_list_services(
         query_db, role_agent_query, is_page=True

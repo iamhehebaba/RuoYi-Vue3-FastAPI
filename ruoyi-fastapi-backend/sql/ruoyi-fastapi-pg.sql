@@ -1120,3 +1120,23 @@ comment on table sys_role_agent is '角色和智能体关联表';
 
 insert into sys_role_agent values(2, 'general_chatbot');
 insert into sys_role_agent values(2, 'ppt_master');
+
+
+-- ----------------------------
+-- 22、langgraph thread表
+-- ----------------------------
+drop table if exists langgraph_thread;
+create table langgraph_thread (
+  thread_id         varchar(100)    not null,                   
+  graph_id          varchar(100)    not null,                   
+  assistant_id      varchar(100),                               
+  created_by        varchar(64)     default 'admin',            
+  created_at        timestamp(0),                               
+  primary key (thread_id)
+) engine=innodb comment = 'langgraph thread表';
+
+comment on langgraph_thread.thread_id is 'langgraph的thread_id，UUID字符串';
+comment on langgraph_thread.graph_id is 'langgraph的graph_id，UUID字符串';
+comment on langgraph_thread.assistant_id is 'langgraph的assistant_id，UUID字符串';
+comment on langgraph_thread.created_by is '创建者';
+comment on langgraph_thread.created_at is '创建时间';

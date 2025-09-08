@@ -398,7 +398,7 @@ class RoleService:
                 await query_db.rollback()
                 raise e
         else:
-            raise ServiceException(message='角色不存在')
+            raise ServiceException(message='指定角色不存在')
 
     @classmethod
     async def get_role_agent_allocated_list_services(
