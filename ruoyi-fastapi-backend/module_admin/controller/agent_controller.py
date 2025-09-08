@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from config.get_db import get_db
 from module_admin.aspect.interface_auth import CheckUserInterfaceAuth, CheckOwnershipInterfaceAuth
 from module_admin.entity.vo.agent_vo import AgentQueryModel
-from module_admin.entity.vo.thread_vo import ThreadCreateModel, RunCreateModel
+from module_admin.entity.vo.thread_vo import ThreadCreateModel, RunCreateModel, ThreadHistoryModel
 from module_admin.entity.vo.user_vo import CurrentUserModel
 from module_admin.service.agent_service import AgentService
 from module_admin.service.thread_service import ThreadService
@@ -128,5 +128,25 @@ async def get_run_result(
     # 调用服务层方法
     result = await ThreadService.get_run_result_service(thread_id, run_id)
     return ResponseUtil.success(data=result)
+
+@agentController.post('/threads/{thread_id}/history', dependencies=[Depends(CheckOwnershipInterfaceAuth('thread_id', 'LanggraphThread'))])
+async def get_thread_history(
+    request: Request,
+    thread_id: str,
+    history_request: ThreadHistoryModel,
+    current_user: CurrentUserModel = Depends(LoginService.get_current_user)
+):
+    """
+    获取thread历史记录
+    """
+    # 获取thread历史记录
+    history_result = await ThreadService.get_thread_history_service(
+        thread_id, 
+        history_request
+    )
+    
+    logger.info(f"用户 {current_user.user.get_user_name()} 成功获取thread历史记录: {thread_id}")
+    
+    return ResponseUtil.success(data=history_result, msg="获取历史记录成功")
 
 

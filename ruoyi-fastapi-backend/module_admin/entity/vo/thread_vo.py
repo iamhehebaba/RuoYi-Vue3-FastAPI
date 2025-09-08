@@ -30,3 +30,10 @@ class RunCreateModel(BaseModel):
     
     assistant_id: str = Field(..., description="assistant ID")
     input: Dict[str, Any] = Field(..., description="输入数据")
+
+
+class ThreadHistoryModel(BaseModel):
+    """获取thread历史记录请求模型"""
+    model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
+    
+    limit: int = Field(..., description="限制返回的历史记录数量")

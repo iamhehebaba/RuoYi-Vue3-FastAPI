@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Dict, Any, Optional
 from module_admin.dao.thread_dao import ThreadDao
 from module_admin.entity.do.langgraphthread_do import LanggraphThread
-from module_admin.entity.vo.thread_vo import ThreadCreateModel, ThreadCreateResponseModel, RunCreateModel
+from module_admin.entity.vo.thread_vo import ThreadCreateModel, ThreadCreateResponseModel, RunCreateModel, ThreadHistoryModel
 from module_admin.entity.vo.common_vo import CrudResponseModel
 from utils.common_util import CamelCaseUtil, SnakeCaseUtil
 from loguru import logger
@@ -252,4 +252,46 @@ class ThreadService:
             raise e
         except Exception as e:
             logger.error(f"获取运行结果失败: {e}")
+            raise e
+
+    @classmethod
+    async def get_thread_history_service(cls, thread_id: str, request: ThreadHistoryModel) -> Dict[str, Any]:
+        """
+        获取thread历史记录
+
+        :param thread_id: thread ID
+        :param request: 获取历史记录请求
+        :return: 历史记录信息
+        """
+        try:
+            # 调用langgraph_api服务
+            langgraph_api_url = os.getenv('LANGGRAPH_API_URL', 'http://localhost:8000')
+            api_url = f"{langgraph_api_url}/threads/{thread_id}/history"
+            
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    api_url,
+                    json=request.model_dump(),
+                    headers={"Content-Type": "application/json"}
+                )
+                
+                if response.status_code != 200:
+                    logger.error(f"调用langgraph_api失败: {response.status_code} - {response.text}")
+                    raise Exception(f"调用langgraph_api失败: {response.status_code}")
+                
+                api_response = response.json()
+                logger.info(f"langgraph_api响应: {api_response}")
+
+            # 将snake_case响应转换回camelCase
+            camel_result = CamelCaseUtil.transform_result(api_response)
+            return camel_result
+            
+        except httpx.TimeoutException:
+            logger.error("调用langgraph_api超时")
+            raise e
+        except httpx.RequestError as e:
+            logger.error(f"调用langgraph_api请求错误: {e}")
+            raise e
+        except Exception as e:
+            logger.error(f"获取thread历史记录失败: {e}")
             raise e
