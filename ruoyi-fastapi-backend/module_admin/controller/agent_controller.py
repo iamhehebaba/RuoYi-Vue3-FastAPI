@@ -60,7 +60,7 @@ async def create_thread(
     
     return ResponseUtil.success(data=thread_result, msg="Thread创建成功")
         
-@agentController.post('/threads/{thread_id}/runs')
+@agentController.post('/threads/{thread_id}/runs', dependencies=[Depends(CheckOwnershipInterfaceAuth('thread_id', 'LanggraphThread'))])
 async def create_run(
     request: Request,
     thread_id: str,
@@ -105,7 +105,7 @@ async def get_run_status(
     result = await ThreadService.get_run_status_service(thread_id, run_id)
     return ResponseUtil.success(data=result)
 
-@agentController.get('/threads/{thread_id}/runs/{run_id}/join')
+@agentController.get('/threads/{thread_id}/runs/{run_id}/join', dependencies=[Depends(CheckOwnershipInterfaceAuth('thread_id', 'LanggraphThread'))])
 async def get_run_result(
     request: Request,
     thread_id: str,
