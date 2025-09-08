@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
-from module_admin.entity.do.thread_do import LanggraphThread
+from module_admin.entity.do.langgraphthread_do import LanggraphThread
 
 
 class ThreadDao:

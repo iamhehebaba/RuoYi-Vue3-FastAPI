@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from config.get_db import get_db
-from module_admin.aspect.interface_auth import CheckUserInterfaceAuth
+from module_admin.aspect.interface_auth import CheckUserInterfaceAuth, CheckOwnershipInterfaceAuth
 from module_admin.entity.vo.agent_vo import AgentQueryModel
 from module_admin.entity.vo.thread_vo import ThreadCreateModel, RunCreateModel
 from module_admin.entity.vo.user_vo import CurrentUserModel
@@ -37,7 +37,7 @@ async def search_agents(
         
 
 @agentController.post('/threads')
-async def create_run(
+async def create_thread(
     request: Request,
     thread_request: ThreadCreateModel,
     db: AsyncSession = Depends(get_db),
@@ -80,7 +80,7 @@ async def create_run(
     
     return ResponseUtil.success(data=run_result, msg="Run创建成功")
 
-@agentController.get('/threads/{thread_id}/runs/{run_id}')
+@agentController.get('/threads/{thread_id}/runs/{run_id}', dependencies=[Depends(CheckOwnershipInterfaceAuth('thread_id', 'LanggraphThread'))])
 async def get_run_status(
     request: Request,
     thread_id: str,

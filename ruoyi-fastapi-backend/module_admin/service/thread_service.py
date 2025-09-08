@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Dict, Any, Optional
 from module_admin.dao.thread_dao import ThreadDao
-from module_admin.entity.do.thread_do import LanggraphThread
+from module_admin.entity.do.langgraphthread_do import LanggraphThread
 from module_admin.entity.vo.thread_vo import ThreadCreateModel, ThreadCreateResponseModel, RunCreateModel
 from module_admin.entity.vo.common_vo import CrudResponseModel
 from utils.common_util import CamelCaseUtil, SnakeCaseUtil
