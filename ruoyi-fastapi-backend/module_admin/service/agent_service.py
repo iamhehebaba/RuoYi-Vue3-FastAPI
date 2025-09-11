@@ -1,5 +1,3 @@
-import os
-import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Dict, Any
 from module_admin.dao.agent_dao import AgentDao
@@ -7,6 +5,7 @@ from module_admin.entity.vo.agent_vo import AgentQueryModel
 from module_admin.entity.do.agent_do import SysAgent
 from exceptions.exception import ServiceException, PermissionException
 from utils.common_util import CamelCaseUtil
+from utils.langgraph_util import LanggraphApiClient
 from module_admin.entity.vo.user_vo import CurrentUserModel
 from loguru import logger
 
@@ -53,23 +52,13 @@ class AgentService:
             if has_empty_assistant_id:
                 logger.info("检测到存在assistant_id为空的记录，开始调用langgraph_api获取assistants信息")
                 
-                langgraph_api_url = os.getenv('LANGGRAPH_API_URL', 'http://localhost:8000')
-                api_url = f"{langgraph_api_url}/assistants/search"
-                
-                async with httpx.AsyncClient(timeout=30.0) as client:
-                    response = await client.post(
-                        api_url,
-                        json={},
-                        headers={"Content-Type": "application/json"}
-                    )
-                    
-                    if response.status_code != 200:
-                        logger.error(f"调用langgraph_api失败: {response.status_code} - {response.text}")
-                        # 如果API调用失败，直接返回原有查询结果
-                        return CamelCaseUtil.transform_result(agent_list)
-                    
-                    api_response = response.json()
-                    logger.info(f"langgraph_api响应: {api_response}")
+                try:
+                    api_client = LanggraphApiClient()
+                    api_response = await api_client.post("/assistants/search", {})
+                except Exception as e:
+                    logger.error(f"调用langgraph_api失败: {e}")
+                    # 如果API调用失败，直接返回原有查询结果
+                    return CamelCaseUtil.transform_result(agent_list)
 
                 # 4. 创建graph_id到assistant_id的映射
                 assistant_mapping = {}
@@ -109,15 +98,8 @@ class AgentService:
             agent_list = await AgentDao.get_agent_list(db, query_request, agent_scope_sql)
             return CamelCaseUtil.transform_result(agent_list)
             
-        except httpx.TimeoutException as e:
-            logger.error("调用langgraph_api超时")
+        except (httpx.TimeoutException, httpx.RequestError) as e:
             await db.rollback()
-            # 超时时返回原有逻辑结果
-            raise e
-        except httpx.RequestError as e:
-            logger.error(f"调用langgraph_api请求错误: {e}")
-            await db.rollback()
-            # 请求错误时返回原有逻辑结果
             raise e
         except Exception as e:
             logger.error(f"获取智能体列表失败: {e}")
