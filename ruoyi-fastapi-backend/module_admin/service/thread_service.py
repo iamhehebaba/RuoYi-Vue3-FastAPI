@@ -282,10 +282,14 @@ class ThreadService:
                 api_response = response.json()
                 logger.info(f"langgraph_api响应: {api_response}")
 
-            # 将snake_case响应转换回camelCase
-            camel_result = CamelCaseUtil.transform_result(api_response)
-            return camel_result
-            
+            # # 将snake_case响应转换回camelCase: not needed for conversation_history field itself
+            # camel_result = CamelCaseUtil.transform_result(api_response)
+            # return camel_result
+            if len(api_response) > 0 and ('conversation_history' in api_response[0]['values']):
+                return api_response[0]['values']['conversation_history']
+            else:
+                return []
+
         except httpx.TimeoutException:
             logger.error("调用langgraph_api超时")
             raise e
