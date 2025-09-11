@@ -1,7 +1,8 @@
-from sqlalchemy import select
+from sqlalchemy import bindparam, func, or_, select, update  # noqa: F401
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 from module_admin.entity.do.langgraphthread_do import LanggraphThread
+from module_admin.entity.vo.thread_vo import ThreadSearchModel
 
 
 class ThreadDao:
@@ -64,5 +65,24 @@ class ThreadDao:
             select(LanggraphThread)
             .where(LanggraphThread.created_by == created_by)
             .order_by(LanggraphThread.created_at.desc())
+        )).scalars().all()
+        return threads
+
+    @classmethod
+    async def get_thread_list(cls, db: AsyncSession, request: ThreadSearchModel, data_scope_sql: str):
+        """
+        获取thread列表，按created_at降序排序，支持分页
+
+        :param db: orm对象
+        :param limit: 限制返回的记录数量
+        :param offset: 偏移量
+        :return: thread列表
+        """
+        threads = (await db.execute(
+            select(LanggraphThread)
+            .where(eval(data_scope_sql))
+            .order_by(LanggraphThread.created_at.desc())
+            .limit(request.limit)
+            .offset(request.offset)
         )).scalars().all()
         return threads

@@ -37,3 +37,11 @@ class ThreadHistoryModel(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
     
     limit: int = Field(..., description="限制返回的历史记录数量")
+
+
+class ThreadSearchModel(BaseModel):
+    """搜索thread列表请求模型"""
+    model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
+    
+    limit: int = Field(..., description="限制返回的记录数量")
+    offset: int = Field(..., description="偏移量")

@@ -21,6 +21,7 @@ class GetDataScope:
         db_alias: Optional[str] = 'db',
         user_alias: Optional[str] = 'user_id',
         dept_alias: Optional[str] = 'dept_id',
+        self_enforced: Optional[bool] = False,
     ):
         """
         获取当前用户数据权限对应的查询sql语句
@@ -29,46 +30,53 @@ class GetDataScope:
         :param db_alias: orm对象别名，默认为'db'
         :param user_alias: 用户id字段别名，默认为'user_id'
         :param dept_alias: 部门id字段别名，默认为'dept_id'
+        :param self_enforced: 是否强制self_enforced，默认为False; 如果self_enforced=True，则强制按照DATA_SCOPE_SELF逻辑执行
         """
         self.query_alias = query_alias
         self.db_alias = db_alias
         self.user_alias = user_alias
         self.dept_alias = dept_alias
+        self.self_enforced = self_enforced
 
     def __call__(self, current_user: CurrentUserModel = Depends(LoginService.get_current_user)):
+        user_name = current_user.user.get_user_name()
         user_id = current_user.user.user_id
         dept_id = current_user.user.dept_id
         custom_data_scope_role_id_list = [
             item.role_id for item in current_user.user.role if item.data_scope == self.DATA_SCOPE_CUSTOM
         ]
         param_sql_list = []
-        for role in current_user.user.role:
-            if current_user.user.admin or role.data_scope == self.DATA_SCOPE_ALL:
-                param_sql_list = ['1 == 1']
-                break
-            elif role.data_scope == self.DATA_SCOPE_CUSTOM:
-                if len(custom_data_scope_role_id_list) > 1:
+
+        if self.self_enforced:
+            param_sql_list.append(f"{self.query_alias}.{self.user_alias} == '{user_name}' if hasattr({self.query_alias}, '{self.user_alias}') else 1 == 0")
+        else:
+            for role in current_user.user.role:
+                if current_user.user.admin or role.data_scope == self.DATA_SCOPE_ALL:
+                    param_sql_list = ['1 == 1']
+                    break
+                elif role.data_scope == self.DATA_SCOPE_CUSTOM:
+                    if len(custom_data_scope_role_id_list) > 1:
+                        param_sql_list.append(
+                            f"{self.query_alias}.{self.dept_alias}.in_(select(SysRoleDept.dept_id).where(SysRoleDept.role_id.in_({custom_data_scope_role_id_list}))) if hasattr({self.query_alias}, '{self.dept_alias}') else 1 == 0"
+                        )
+                    else:
+                        param_sql_list.append(
+                            f"{self.query_alias}.{self.dept_alias}.in_(select(SysRoleDept.dept_id).where(SysRoleDept.role_id == {role.role_id})) if hasattr({self.query_alias}, '{self.dept_alias}') else 1 == 0"
+                        )
+                elif role.data_scope == self.DATA_SCOPE_DEPT:
                     param_sql_list.append(
-                        f"{self.query_alias}.{self.dept_alias}.in_(select(SysRoleDept.dept_id).where(SysRoleDept.role_id.in_({custom_data_scope_role_id_list}))) if hasattr({self.query_alias}, '{self.dept_alias}') else 1 == 0"
+                        f"{self.query_alias}.{self.dept_alias} == {dept_id} if hasattr({self.query_alias}, '{self.dept_alias}') else 1 == 0"
+                    )
+                elif role.data_scope == self.DATA_SCOPE_DEPT_AND_CHILD:
+                    param_sql_list.append(
+                        f"{self.query_alias}.{self.dept_alias}.in_(select(SysDept.dept_id).where(or_(SysDept.dept_id == {dept_id}, func.find_in_set({dept_id}, SysDept.ancestors)))) if hasattr({self.query_alias}, '{self.dept_alias}') else 1 == 0"
+                    )
+                elif role.data_scope == self.DATA_SCOPE_SELF:
+                    param_sql_list.append(
+                        f"{self.query_alias}.{self.user_alias} == {user_id} if hasattr({self.query_alias}, '{self.user_alias}') else 1 == 0"
                     )
                 else:
-                    param_sql_list.append(
-                        f"{self.query_alias}.{self.dept_alias}.in_(select(SysRoleDept.dept_id).where(SysRoleDept.role_id == {role.role_id})) if hasattr({self.query_alias}, '{self.dept_alias}') else 1 == 0"
-                    )
-            elif role.data_scope == self.DATA_SCOPE_DEPT:
-                param_sql_list.append(
-                    f"{self.query_alias}.{self.dept_alias} == {dept_id} if hasattr({self.query_alias}, '{self.dept_alias}') else 1 == 0"
-                )
-            elif role.data_scope == self.DATA_SCOPE_DEPT_AND_CHILD:
-                param_sql_list.append(
-                    f"{self.query_alias}.{self.dept_alias}.in_(select(SysDept.dept_id).where(or_(SysDept.dept_id == {dept_id}, func.find_in_set({dept_id}, SysDept.ancestors)))) if hasattr({self.query_alias}, '{self.dept_alias}') else 1 == 0"
-                )
-            elif role.data_scope == self.DATA_SCOPE_SELF:
-                param_sql_list.append(
-                    f"{self.query_alias}.{self.user_alias} == {user_id} if hasattr({self.query_alias}, '{self.user_alias}') else 1 == 0"
-                )
-            else:
-                param_sql_list.append('1 == 0')
+                    param_sql_list.append('1 == 0')
         param_sql_list = list(dict.fromkeys(param_sql_list))
         param_sql = f"or_({', '.join(param_sql_list)})"
 

@@ -3,12 +3,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from config.get_db import get_db
 from module_admin.aspect.interface_auth import CheckUserInterfaceAuth, CheckOwnershipInterfaceAuth
 from module_admin.entity.vo.agent_vo import AgentQueryModel
-from module_admin.entity.vo.thread_vo import ThreadCreateModel, RunCreateModel, ThreadHistoryModel
+from module_admin.entity.vo.thread_vo import ThreadCreateModel, RunCreateModel, ThreadHistoryModel, ThreadSearchModel
 from module_admin.entity.vo.user_vo import CurrentUserModel
 from module_admin.service.agent_service import AgentService
 from module_admin.service.thread_service import ThreadService
 from module_admin.service.login_service import LoginService
 from module_admin.aspect.agent_scope import GetAgentScope
+from module_admin.aspect.data_scope import GetDataScope
 
 from utils.response_util import ResponseUtil
 from utils.log_util import logger
@@ -59,6 +60,8 @@ async def create_thread(
     logger.info(f"用户 {current_user.user.get_user_name()} 成功创建thread: {thread_result.get('threadId')}")
     
     return ResponseUtil.success(data=thread_result, msg="Thread创建成功")
+
+    
         
 @agentController.post('/threads/{thread_id}/runs', dependencies=[Depends(CheckOwnershipInterfaceAuth('thread_id', 'LanggraphThread'))])
 async def create_run(
@@ -148,5 +151,28 @@ async def get_thread_history(
     logger.info(f"用户 {current_user.user.get_user_name()} 成功获取thread历史记录: {thread_id}")
     
     return ResponseUtil.success(data=history_result, msg="获取历史记录成功")
+
+
+@agentController.post('/threads/search')
+async def get_thread_list(
+    request: Request,
+    search_request: ThreadSearchModel,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
+    data_scope_sql: str = Depends(GetDataScope('LanggraphThread', user_alias='created_by', self_enforced=True))
+):
+    """
+    搜索thread列表
+    """
+    # 获取thread列表
+    thread_list = await ThreadService.get_thread_list_service(
+        db,
+        search_request,
+        data_scope_sql
+    )
+    
+    logger.info(f"用户 {current_user.user.get_user_name()} 成功获取thread列表，返回 {len(thread_list)} 条记录")
+    
+    return ResponseUtil.success(data=thread_list, msg="获取thread列表成功")
 
 

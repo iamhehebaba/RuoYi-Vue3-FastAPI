@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Dict, Any, Optional
 from module_admin.dao.thread_dao import ThreadDao
 from module_admin.entity.do.langgraphthread_do import LanggraphThread
-from module_admin.entity.vo.thread_vo import ThreadCreateModel, ThreadCreateResponseModel, RunCreateModel, ThreadHistoryModel
+from module_admin.entity.vo.thread_vo import ThreadCreateModel, ThreadCreateResponseModel, RunCreateModel, ThreadHistoryModel, ThreadSearchModel
 from module_admin.entity.vo.common_vo import CrudResponseModel
 from utils.common_util import CamelCaseUtil, SnakeCaseUtil
 from loguru import logger
@@ -298,4 +298,20 @@ class ThreadService:
             raise e
         except Exception as e:
             logger.error(f"获取thread历史记录失败: {e}")
+            raise e
+
+    @classmethod
+    async def get_thread_list_service(cls, db: AsyncSession, request: ThreadSearchModel, data_scope_sql: str):
+        """
+        获取thread列表，按created_at降序排序，支持分页
+
+        :param db: orm对象
+        :param request: 搜索请求参数
+        :return: thread列表
+        """
+        try:
+            threads = await ThreadDao.get_thread_list(db, request, data_scope_sql)
+            return CamelCaseUtil.transform_result(threads)
+        except Exception as e:
+            logger.error(f"获取thread列表失败: {e}")
             raise e
