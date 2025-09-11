@@ -10,6 +10,7 @@ class SysAgent(Base):
     
     # id = Column(Integer, primary_key=True, autoincrement=True, comment='智能体ID')
     graph_id = Column(String(100), primary_key=True, nullable=False, unique=True, comment='智能体图ID')
+    assistant_id = Column(String(100), comment='助手ID')
     name = Column(String(100), nullable=False, comment='智能体名称')
     description = Column(Text, comment='智能体描述')
     status = Column(String(1), default='0', comment='状态（0正常 1停用）')

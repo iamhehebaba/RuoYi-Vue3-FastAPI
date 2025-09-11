@@ -1,3 +1,5 @@
+import os
+import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Dict, Any
 from module_admin.dao.agent_dao import AgentDao
@@ -40,9 +42,87 @@ class AgentService:
         :param agent_scope_sql: 智能体权限对应的查询sql语句
         :return: 智能体列表
         """
+        try:
+            # 1. 先查询本地数据库获取智能体列表
+            agent_list = await AgentDao.get_agent_list(db, query_request, agent_scope_sql)
+            
+            # 2. 检查是否存在assistant_id为空的记录
+            has_empty_assistant_id = any(agent.assistant_id == '' or agent.assistant_id is None for agent in agent_list)
+            
+            # 3. 只有当存在assistant_id为空的记录时，才向langgraph-api发起查询
+            if has_empty_assistant_id:
+                logger.info("检测到存在assistant_id为空的记录，开始调用langgraph_api获取assistants信息")
+                
+                langgraph_api_url = os.getenv('LANGGRAPH_API_URL', 'http://localhost:8000')
+                api_url = f"{langgraph_api_url}/assistants/search"
+                
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    response = await client.post(
+                        api_url,
+                        json={},
+                        headers={"Content-Type": "application/json"}
+                    )
+                    
+                    if response.status_code != 200:
+                        logger.error(f"调用langgraph_api失败: {response.status_code} - {response.text}")
+                        # 如果API调用失败，直接返回原有查询结果
+                        return CamelCaseUtil.transform_result(agent_list)
+                    
+                    api_response = response.json()
+                    logger.info(f"langgraph_api响应: {api_response}")
 
-        agent_list = await AgentDao.get_agent_list(db, query_request, agent_scope_sql)
-        return CamelCaseUtil.transform_result(agent_list)
+                # 4. 创建graph_id到assistant_id的映射
+                assistant_mapping = {}
+                for assistant in api_response:
+                    if 'graph_id' in assistant and 'assistant_id' in assistant:
+                        assistant_mapping[assistant['graph_id']] = assistant['assistant_id']
+
+                # 5. 仅更新assistant_id为空的记录
+                updated_count = 0
+                for agent in agent_list:
+                    # 只更新assistant_id为空或None的记录
+                    if (agent.assistant_id == '' or agent.assistant_id is None) and agent.graph_id in assistant_mapping:
+                        # 更新数据库中的assistant_id
+                        await AgentDao.update_agent_assistant_id(
+                            db, 
+                            agent.graph_id, 
+                            assistant_mapping[agent.graph_id]
+                        )
+                        # 更新内存中的对象
+                        agent.assistant_id = assistant_mapping[agent.graph_id]
+                        updated_count += 1
+                        logger.info(f"已更新智能体 {agent.graph_id} 的assistant_id为: {assistant_mapping[agent.graph_id]}")
+                    elif (agent.assistant_id == '' or agent.assistant_id is None) and agent.graph_id not in assistant_mapping:
+                        # 记录没有找到对应assistant_id的智能体
+                        logger.error(f"智能体 {agent.graph_id} 在langgraph_api响应中未找到对应的assistant_id")
+
+                # 6. 提交数据库更改
+                if updated_count > 0:
+                    await db.commit()
+                    logger.info(f"成功更新了 {updated_count} 个智能体的assistant_id")
+                else:
+                    logger.info("没有需要更新的智能体记录")
+            else:
+                logger.info("所有智能体都已有assistant_id，跳过langgraph_api调用")
+            
+            # 7. 返回查询结果
+            agent_list = await AgentDao.get_agent_list(db, query_request, agent_scope_sql)
+            return CamelCaseUtil.transform_result(agent_list)
+            
+        except httpx.TimeoutException as e:
+            logger.error("调用langgraph_api超时")
+            await db.rollback()
+            # 超时时返回原有逻辑结果
+            raise e
+        except httpx.RequestError as e:
+            logger.error(f"调用langgraph_api请求错误: {e}")
+            await db.rollback()
+            # 请求错误时返回原有逻辑结果
+            raise e
+        except Exception as e:
+            logger.error(f"获取智能体列表失败: {e}")
+            await db.rollback()
+            raise e
 
     @classmethod
     async def search_agents(cls, db: AsyncSession, role_ids: List[int], request: AgentQueryModel) -> List[Dict[str, Any]]:
