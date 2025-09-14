@@ -1,7 +1,8 @@
 from sqlalchemy import bindparam, func, or_, select, update  # noqa: F401
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional
+from sqlalchemy.orm import selectinload
+from typing import List
 from module_admin.entity.do.agent_do import SysAgent
 from module_admin.entity.do.role_do import SysRoleAgent
 from module_admin.entity.vo.agent_vo import AgentQueryModel
@@ -138,3 +139,19 @@ class AgentDao:
         
         count = (await db.execute(query)).scalar()
         return count > 0
+
+    @classmethod
+    async def update_agent_assistant_id(cls, db: AsyncSession, graph_id: str, assistant_id: str):
+        """
+        更新智能体的assistant_id
+
+        :param db: orm对象
+        :param graph_id: 智能体graph_id
+        :param assistant_id: 助手ID
+        :return:
+        """
+        await db.execute(
+            update(SysAgent)
+            .where(SysAgent.graph_id == graph_id)
+            .values(assistant_id=assistant_id)
+        )

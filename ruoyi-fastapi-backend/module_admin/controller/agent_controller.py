@@ -1,14 +1,15 @@
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from config.get_db import get_db
-from module_admin.aspect.interface_auth import CheckUserInterfaceAuth
+from module_admin.aspect.interface_auth import CheckUserInterfaceAuth, CheckOwnershipInterfaceAuth
 from module_admin.entity.vo.agent_vo import AgentQueryModel
-from module_admin.entity.vo.thread_vo import ThreadCreateModel, RunCreateModel
+from module_admin.entity.vo.thread_vo import ThreadCreateModel, RunCreateModel, ThreadHistoryModel, ThreadSearchModel
 from module_admin.entity.vo.user_vo import CurrentUserModel
 from module_admin.service.agent_service import AgentService
 from module_admin.service.thread_service import ThreadService
 from module_admin.service.login_service import LoginService
 from module_admin.aspect.agent_scope import GetAgentScope
+from module_admin.aspect.data_scope import GetDataScope
 
 from utils.response_util import ResponseUtil
 from utils.log_util import logger
@@ -37,7 +38,7 @@ async def search_agents(
         
 
 @agentController.post('/threads')
-async def create_run(
+async def create_thread(
     request: Request,
     thread_request: ThreadCreateModel,
     db: AsyncSession = Depends(get_db),
@@ -59,8 +60,10 @@ async def create_run(
     logger.info(f"用户 {current_user.user.get_user_name()} 成功创建thread: {thread_result.get('threadId')}")
     
     return ResponseUtil.success(data=thread_result, msg="Thread创建成功")
+
+    
         
-@agentController.post('/threads/{thread_id}/runs')
+@agentController.post('/threads/{thread_id}/runs', dependencies=[Depends(CheckOwnershipInterfaceAuth('thread_id', 'LanggraphThread'))])
 async def create_run(
     request: Request,
     thread_id: str,
@@ -80,7 +83,7 @@ async def create_run(
     
     return ResponseUtil.success(data=run_result, msg="Run创建成功")
 
-@agentController.get('/threads/{thread_id}/runs/{run_id}')
+@agentController.get('/threads/{thread_id}/runs/{run_id}', dependencies=[Depends(CheckOwnershipInterfaceAuth('thread_id', 'LanggraphThread'))])
 async def get_run_status(
     request: Request,
     thread_id: str,
@@ -105,7 +108,7 @@ async def get_run_status(
     result = await ThreadService.get_run_status_service(thread_id, run_id)
     return ResponseUtil.success(data=result)
 
-@agentController.get('/threads/{thread_id}/runs/{run_id}/join')
+@agentController.get('/threads/{thread_id}/runs/{run_id}/join', dependencies=[Depends(CheckOwnershipInterfaceAuth('thread_id', 'LanggraphThread'))])
 async def get_run_result(
     request: Request,
     thread_id: str,
@@ -128,5 +131,48 @@ async def get_run_result(
     # 调用服务层方法
     result = await ThreadService.get_run_result_service(thread_id, run_id)
     return ResponseUtil.success(data=result)
+
+@agentController.post('/threads/{thread_id}/history', dependencies=[Depends(CheckOwnershipInterfaceAuth('thread_id', 'LanggraphThread'))])
+async def get_thread_history(
+    request: Request,
+    thread_id: str,
+    history_request: ThreadHistoryModel,
+    current_user: CurrentUserModel = Depends(LoginService.get_current_user)
+):
+    """
+    获取thread历史记录
+    """
+    # 获取thread历史记录
+    history_result = await ThreadService.get_thread_history_service(
+        thread_id, 
+        history_request
+    )
+    
+    logger.info(f"用户 {current_user.user.get_user_name()} 成功获取thread历史记录: {thread_id}")
+    
+    return ResponseUtil.success(data=history_result, msg="获取历史记录成功")
+
+
+@agentController.post('/threads/search')
+async def get_thread_list(
+    request: Request,
+    search_request: ThreadSearchModel,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
+    data_scope_sql: str = Depends(GetDataScope('LanggraphThread', user_alias='created_by', self_enforced=True))
+):
+    """
+    搜索thread列表
+    """
+    # 获取thread列表
+    thread_list = await ThreadService.get_thread_list_service(
+        db,
+        search_request,
+        data_scope_sql
+    )
+    
+    logger.info(f"用户 {current_user.user.get_user_name()} 成功获取thread列表，返回 {len(thread_list)} 条记录")
+    
+    return ResponseUtil.success(data=thread_list, msg="获取thread列表成功")
 
 
