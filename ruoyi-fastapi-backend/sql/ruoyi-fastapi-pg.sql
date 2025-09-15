@@ -1140,3 +1140,24 @@ comment on langgraph_thread.graph_id is 'langgraph的graph_id，UUID字符串';
 comment on langgraph_thread.assistant_id is 'langgraph的assistant_id，UUID字符串';
 comment on langgraph_thread.created_by is '创建者';
 comment on langgraph_thread.created_at is '创建时间';
+
+-- ----------------------------
+-- 23、ragflow token表
+-- ----------------------------
+drop table if exists ragflow_token;
+create table ragflow_token (
+  email             varchar(100)    not null,
+  nickname          varchar(100)    not null,
+  encoded_password  varchar(100)    not null,
+  token             varchar(500)    not null,
+  token_refresh_time timestamp      not null,
+  create_time       timestamp,
+  primary key (email),
+) engine=innodb comment = 'ragflow token表';
+
+comment on ragflow_token.email is '注册邮箱';
+comment on ragflow_token.nickname is '昵称';
+comment on ragflow_token.encoded_password is '密码';
+comment on ragflow_token.token is '认证token';
+comment on ragflow_token.token_refresh_time is 'token刷新时间';
+comment on ragflow_token.create_time is '创建时间';
