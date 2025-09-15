@@ -38,3 +38,66 @@ class ModelService:
                 status_code=500,
                 detail=f"获取LLM factories列表失败: {str(e)}"
             )
+
+    @classmethod
+    async def get_my_llms_service(cls) -> Dict[str, Any]:
+        """
+        获取我的LLMs列表服务
+        
+        Returns:
+            Dict[str, Any]: 我的LLMs数据
+            
+        Raises:
+            HTTPException: 当请求失败时抛出异常
+        """
+        try:
+            logger.info("开始获取我的LLMs列表")
+            
+            # 创建RagflowClient实例
+            ragflow_client = RagflowClient()
+            
+            # 发送GET请求到ragflow的/v1/llm/my_llms接口
+            response = await ragflow_client.get('/v1/llm/my_llms')
+            
+            logger.info(f"成功获取我的LLMs列表，返回数据: {response}")
+            return response
+            
+        except Exception as e:
+            logger.error(f"获取我的LLMs列表失败: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"获取我的LLMs列表失败: {str(e)}"
+            )
+
+    @classmethod
+    async def delete_llm_service(cls, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        删除LLM服务
+        
+        Args:
+            payload: 删除LLM的请求数据
+            
+        Returns:
+            Dict[str, Any]: 删除结果数据
+            
+        Raises:
+            HTTPException: 当请求失败时抛出异常
+        """
+        try:
+            logger.info(f"开始删除LLM，请求数据: {payload}")
+            
+            # 创建RagflowClient实例
+            ragflow_client = RagflowClient()
+            
+            # 发送POST请求到ragflow的/v1/llm/delete_llm接口
+            response = await ragflow_client.post('/v1/llm/delete_llm', json=payload)
+            
+            logger.info(f"成功删除LLM，返回数据: {response}")
+            return response
+            
+        except Exception as e:
+            logger.error(f"删除LLM失败: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"删除LLM失败: {str(e)}"
+            )

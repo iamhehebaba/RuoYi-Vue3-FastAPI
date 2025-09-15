@@ -112,6 +112,24 @@ class RagflowClient:
             logger.error(f"注册过程中发生错误: {e}")
             return False
 
+    async def refresh_token(self, db: AsyncSession) -> Optional[str]:
+        """
+        刷新token：删除过期token并重新认证
+        
+        :param db: 数据库会话
+        :return: 新的token，如果刷新失败则返回None
+        """
+        try:
+            # 删除过期的token
+            dao = RagflowDao(db)
+            await dao.delete_token_by_email(self.email)
+            
+            # 重新认证
+            return await self._login_and_save_token(db, dao)
+        except Exception as e:
+            logger.error(f"刷新token失败: {e}")
+            return None
+
     async def _login_and_save_token(self, db: AsyncSession, dao: RagflowDao) -> Optional[str]:
         """登录并保存token"""
         try:
@@ -155,6 +173,22 @@ class RagflowClient:
             logger.error(f"登录过程中发生错误: {e}")
             return None
 
+    async def _refresh_token_needed(self, response: requests.Response) -> bool:
+        """
+        判断是否需要刷新token
+        
+        :param response: 响应对象
+        :return: 是否需要刷新token
+        """
+        need_refresh = (response.status_code == 401)
+        if not need_refresh and response.status_code == 200:
+
+            response_json = response.json()
+            code = response_json['code']
+            if code == 401:
+                need_refresh = 'unauthorized' in response_json['message'].lower()
+        return need_refresh
+
     async def _make_request(self, method: str, path: str, **kwargs) -> requests.Response:
         """
         发送请求到Ragflow服务器
@@ -183,18 +217,16 @@ class RagflowClient:
                 response = self.session.request(method, url, **kwargs)
                 
                 # 如果token过期（401错误），尝试重新认证
-                if response.status_code == 401:
+                if await self._refresh_token_needed(response):
                     logger.info("Token可能已过期，尝试重新认证")
-                    # 删除过期的token
-                    dao = RagflowDao(db)
-                    await dao.delete_token_by_email(self.email)
-                    
-                    # 重新认证
-                    token = await self._get_valid_token()
+                    # 刷新token
+                    token = await self.refresh_token(db)
                     if token:
                         headers['authorization'] = token
                         kwargs['headers'] = headers
                         response = self.session.request(method, url, **kwargs)
+                    else:
+                        raise Exception("刷新token失败，无法继续请求")
                 
                 api_response = response.json()
                 logger.info(f"ragflow 响应: {api_response}")
@@ -202,7 +234,7 @@ class RagflowClient:
                 
             except Exception as e:
                 logger.error(f"请求过程中发生错误: {e}")
-                raise
+                raise e
 
     async def get(self, path: str, **kwargs) -> requests.Response:
         """
