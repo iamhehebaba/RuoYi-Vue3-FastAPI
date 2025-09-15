@@ -789,3 +789,18 @@ create table langgraph_thread (
   created_at        datetime                                   comment '创建时间',
   primary key (thread_id)
 ) engine=innodb comment = 'langgraph thread表';
+
+
+-- ----------------------------
+-- 23、ragflow token表
+-- ----------------------------
+drop table if exists ragflow_token;
+create table ragflow_token (
+  email             varchar(100)    not null                   comment '注册邮箱',
+  nickname          varchar(100)    not null                   comment '昵称',
+  encoded_password  varchar(100)    not null                   comment '密码',
+  token             varchar(500)    not null                   comment '认证token',
+  token_refresh_time datetime       not null                   comment 'token创建时间',
+  create_time        datetime                                  comment '创建时间',
+  primary key (email),
+) engine=innodb comment = 'ragflow token表';

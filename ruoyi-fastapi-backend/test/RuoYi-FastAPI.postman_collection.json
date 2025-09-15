@@ -1,1246 +1,4776 @@
 {
-  "info": {
-    "name": "RuoYi-FastAPI",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Postman collection for RuoYi-Vue3-FastAPI backend"
-  },
-  "variable": [
-    {"key": "baseUrl", "value": "http://localhost:9099/dev-api"},
-    {"key": "accessToken", "value": ""},
-    {"key": "uuid", "value": ""},
-    {"key": "captcha_code", "value": ""},
-    {"key": "username", "value": "admin"},
-    {"key": "password", "value": "admin123"}
-  ],
-  "item": [
-    {
-      "name": "Auth",
-      "item": [
-        {
-          "name": "Captcha Image",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {"raw": "{{baseUrl}}/captchaImage", "host": ["{{baseUrl}}"], "path": ["captchaImage"]}
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('HTTP 200', () => pm.response.code === 200);",
-                  "const json = pm.response.json() || {};",
-                  "pm.test('biz code 200', () => json.code === 200 && json.success === true);",
-                  "if (json.uuid) { pm.collectionVariables.set('uuid', json.uuid); }"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ]
-        },
-        {
-          "name": "Login (x-www-form-urlencoded)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {"key": "Content-Type", "value": "application/x-www-form-urlencoded"}
-            ],
-            "body": {
-              "mode": "urlencoded",
-              "urlencoded": [
-                {"key": "username", "value": "{{username}}"},
-                {"key": "password", "value": "{{password}}"},
-                {"key": "code", "value": "{{captcha_code}}"},
-                {"key": "uuid", "value": "{{uuid}}"}
-              ]
-            },
-            "url": {"raw": "{{baseUrl}}/login", "host": ["{{baseUrl}}"], "path": ["login"]}
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('HTTP 200', () => pm.response.code === 200);",
-                  "const json = pm.response.json() || {};",
-                  "pm.test('biz code 200', () => json.code === 200 && json.success === true);",
-                  "if (json.token) { pm.collectionVariables.set('accessToken', json.token); }"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ]
-        },
-        {
-          "name": "Logout",
-          "request": {
-            "method": "POST",
-            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]},
-            "url": {"raw": "{{baseUrl}}/logout", "host": ["{{baseUrl}}"], "path": ["logout"]}
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('HTTP 200', () => pm.response.code === 200);",
-                  "const json = pm.response.json() || {};",
-                  "pm.test('biz code 200', () => json.code === 200 && json.success === true);",
-                  "pm.collectionVariables.unset('accessToken');"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "User",
-      "item": [
-        {
-          "name": "Get Info",
-          "request": {
-            "method": "GET",
-            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]},
-            "url": {"raw": "{{baseUrl}}/getInfo", "host": ["{{baseUrl}}"], "path": ["getInfo"]}
-          },
-          "event": [{"listen": "test", "script": {"exec": ["pm.test('HTTP 200', () => pm.response.code === 200);","pm.test('biz code 200', () => (pm.response.json()||{}).code === 200);"]}}]
-        },
-        {
-          "name": "Get Routers",
-          "request": {
-            "method": "GET",
-            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]},
-            "url": {"raw": "{{baseUrl}}/getRouters", "host": ["{{baseUrl}}"], "path": ["getRouters"]}
-          },
-          "event": [{"listen": "test", "script": {"exec": ["pm.test('HTTP 200', () => pm.response.code === 200);","pm.test('biz code 200', () => (pm.response.json()||{}).code === 200);"]}}]
-        },
-        {
-          "name": "List Users",
-          "request": {
-            "method": "GET",
-            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]},
-            "url": {
-              "raw": "{{baseUrl}}/system/user/list?pageNum=1&pageSize=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["system","user","list"],
-              "query": [
-                {"key": "pageNum", "value": "1"},
-                {"key": "pageSize", "value": "10"}
-              ]
-            }
-          },
-          "event": [{"listen": "test", "script": {"exec": ["pm.test('HTTP 200', () => pm.response.code === 200);","const j=pm.response.json()||{}; pm.test('biz code 200', ()=> j.code===200 && j.success===true);"]}}]
-        }
-      ]
-    },
-    {
-      "name": "Common",
-      "item": [
-        {
-          "name": "Upload File",
-          "request": {
-            "method": "POST",
-            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]},
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                {"key": "file", "type": "file", "src": []}
-              ]
-            },
-            "url": {"raw": "{{baseUrl}}/common/upload", "host": ["{{baseUrl}}"], "path": ["common","upload"]}
-          },
-          "event": [{"listen": "test", "script": {"exec": ["pm.test('HTTP 200', () => pm.response.code === 200);","pm.test('biz code 200', () => (pm.response.json()||{}).code === 200);"]}}]
-        },
-        {
-          "name": "Download File",
-          "request": {
-            "method": "GET",
-            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]},
-            "url": {
-              "raw": "{{baseUrl}}/common/download?fileName=demo.xlsx&delete=false",
-              "host": ["{{baseUrl}}"],
-              "path": ["common","download"],
-              "query": [
-                {"key": "fileName", "value": "demo.xlsx"},
-                {"key": "delete", "value": "false"}
-              ]
-            }
-          }
-        },
-        {
-          "name": "Download Resource",
-          "request": {
-            "method": "GET",
-            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]},
-            "url": {
-              "raw": "{{baseUrl}}/common/download/resource?resource=profile/upload/2021/11/21/demo.png",
-              "host": ["{{baseUrl}}"],
-              "path": ["common","download","resource"],
-              "query": [
-                {"key": "resource", "value": "profile/upload/2021/11/21/demo.png"}
-              ]
-            }
-          },
-          "event": [{"listen": "test", "script": {"exec": ["pm.test('HTTP 200', () => pm.response.code === 200);"]}}]
-        }
-      ]
-    },
-    {
-      "name": "Proxy",
-      "item": [
-        {
-          "name": "GET /proxy/langgraph/openapi.json",
-          "request": {
-            "method": "GET",
-            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]},
-            "url": {"raw": "{{baseUrl}}/proxy/langgraph/openapi.json", "host": ["{{baseUrl}}"], "path": ["proxy","langgraph","openapi.json"]}
-          },
-          "event": [{"listen": "test", "script": {"exec": ["pm.test('HTTP 200', () => pm.response.code === 200);"]}}]
-        },
-        {
-          "name": "GET /proxy/service-a/health",
-          "request": {
-            "method": "GET",
-            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]},
-            "url": {"raw": "{{baseUrl}}/proxy/service-a/health", "host": ["{{baseUrl}}"], "path": ["proxy","service-a","health"]}
-          },
-          "event": [{"listen": "test", "script": {"exec": ["pm.test('HTTP 200', () => pm.response.code === 200);"]}}]
-        },
-        {
-          "name": "POST /proxy/service-b/admin/ping",
-          "request": {
-            "method": "POST",
-            "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]},
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"ping\": true\n}"},
-            "url": {"raw": "{{baseUrl}}/proxy/service-b/admin/ping", "host": ["{{baseUrl}}"], "path": ["proxy","service-b","admin","ping"]}
-          },
-          "event": [{"listen": "test", "script": {"exec": ["pm.test('HTTP 200', () => pm.response.code === 200);"]}}]
-        }
-      ]
-    },
-    {
-      "name": "System Management",
-      "item": [
-        {
-          "name": "Post",
-          "item": [
-            {
-              "name": "List Posts",
-              "request": {
-                "method": "GET",
-                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]},
-                "url": {
-                  "raw": "{{baseUrl}}/system/post/list?pageNum=1&pageSize=10",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["system","post","list"],
-                  "query": [
-                    {"key": "pageNum", "value": "1"},
-                    {"key": "pageSize", "value": "10"}
-                  ]
-                }
-              },
-              "event": [{"listen": "test", "script": {"exec": ["pm.test('HTTP 200', () => pm.response.code === 200);","pm.test('biz code 200', () => (pm.response.json()||{}).code === 200);"]}}]
-            },
-            {
-              "name": "Add Post",
-              "request": {
-                "method": "POST",
-                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]},
-                "header": [{"key": "Content-Type", "value": "application/json"}],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"postId\": 0,\n  \"postCode\": \"dev\",\n  \"postName\": \"开发\",\n  \"postSort\": 1,\n  \"status\": \"0\",\n  \"remark\": \"\"\n}"
-                },
-                "url": {"raw": "{{baseUrl}}/system/post", "host": ["{{baseUrl}}"], "path": ["system","post"]}
-              }
-            },
-            {
-              "name": "Get Post Detail",
-              "request": {
-                "method": "GET",
-                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]},
-                "url": {"raw": "{{baseUrl}}/system/post/1", "host": ["{{baseUrl}}"], "path": ["system","post","1"]}
-              }
-            },
-            {
-              "name": "Delete Posts",
-              "request": {
-                "method": "DELETE",
-                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]},
-                "url": {"raw": "{{baseUrl}}/system/post/1", "host": ["{{baseUrl}}"], "path": ["system","post","1"]}
-              }
-            },
-            {
-              "name": "Export Posts",
-              "request": {
-                "method": "POST",
-                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]},
-                "header": [{"key": "Content-Type", "value": "application/x-www-form-urlencoded"}],
-                "body": {"mode": "urlencoded", "urlencoded": [{"key": "postName", "value": ""}]},
-                "url": {"raw": "{{baseUrl}}/system/post/export", "host": ["{{baseUrl}}"], "path": ["system","post","export"]}
-              }
-            }
-          ]
-        },
-        {
-          "name": "Dict",
-          "item": [
-            {
-              "name": "Type List",
-              "request": {
-                "method": "GET",
-                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]},
-                "url": {
-                  "raw": "{{baseUrl}}/system/dict/type/list?pageNum=1&pageSize=10",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["system","dict","type","list"],
-                  "query": [
-                    {"key": "pageNum", "value": "1"},
-                    {"key": "pageSize", "value": "10"}
-                  ]
-                }
-              }
-            },
-            {
-              "name": "Type Add",
-              "request": {
-                "method": "POST",
-                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]},
-                "header": [{"key": "Content-Type", "value": "application/json"}],
-                "body": {"mode": "raw", "raw": "{\n  \"dictId\": 0,\n  \"dictName\": \"测试字典\",\n  \"dictType\": \"test_type\",\n  \"status\": \"0\",\n  \"remark\": \"\"\n}"},
-                "url": {"raw": "{{baseUrl}}/system/dict/type", "host": ["{{baseUrl}}"], "path": ["system","dict","type"]}
-              }
-            },
-            {
-              "name": "Data List",
-              "request": {
-                "method": "GET",
-                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]},
-                "url": {
-                  "raw": "{{baseUrl}}/system/dict/data/list?pageNum=1&pageSize=10",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["system","dict","data","list"],
-                  "query": [
-                    {"key": "pageNum", "value": "1"},
-                    {"key": "pageSize", "value": "10"}
-                  ]
-                }
-              }
-            },
-            {
-              "name": "Data Add",
-              "request": {
-                "method": "POST",
-                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]},
-                "header": [{"key": "Content-Type", "value": "application/json"}],
-                "body": {"mode": "raw", "raw": "{\n  \"dictCode\": 0,\n  \"dictSort\": 1,\n  \"dictLabel\": \"值1\",\n  \"dictValue\": \"1\",\n  \"dictType\": \"test_type\",\n  \"status\": \"0\",\n  \"remark\": \"\"\n}"},
-                "url": {"raw": "{{baseUrl}}/system/dict/data", "host": ["{{baseUrl}}"], "path": ["system","dict","data"]}
-              }
-            },
-            {
-              "name": "Type Option Select",
-              "request": {
-                "method": "GET",
-                "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]},
-                "url": {"raw": "{{baseUrl}}/system/dict/type/optionselect", "host": ["{{baseUrl}}"], "path": ["system","dict","type","optionselect"]}
-              }
-            }
-          ]
-        },
-        {
-          "name": "Dept",
-          "item": [
-            {
-              "name": "List Depts",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/system/dept/list","host":["{{baseUrl}}"],"path":["system","dept","list"]}
-              },
-              "event": [{"listen":"test","script":{"exec":["pm.test('HTTP 200',()=>pm.response.code===200);","pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"]}}]
-            },
-            {
-              "name": "List Depts Exclude",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/system/dept/list/exclude/100","host":["{{baseUrl}}"],"path":["system","dept","list","exclude","100"]}
-              }
-            },
-            {
-              "name": "Add Dept",
-              "request": {
-                "method": "POST",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "header":[{"key":"Content-Type","value":"application/json"}],
-                "body":{"mode":"raw","raw":"{\n  \"parentId\": 0,\n  \"deptName\": \"测试部门\",\n  \"orderNum\": 1,\n  \"leader\": \"张三\",\n  \"phone\": \"13800000000\",\n  \"email\": \"test@example.com\",\n  \"status\": \"0\"\n}"},
-                "url": {"raw":"{{baseUrl}}/system/dept","host":["{{baseUrl}}"],"path":["system","dept"]}
-              }
-            },
-            {
-              "name": "Edit Dept",
-              "request": {
-                "method": "PUT",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "header":[{"key":"Content-Type","value":"application/json"}],
-                "body":{"mode":"raw","raw":"{\n  \"deptId\": 1,\n  \"parentId\": 0,\n  \"deptName\": \"测试部门-修改\",\n  \"orderNum\": 1,\n  \"leader\": \"李四\",\n  \"phone\": \"13800000001\",\n  \"email\": \"test2@example.com\",\n  \"status\": \"0\"\n}"},
-                "url": {"raw":"{{baseUrl}}/system/dept","host":["{{baseUrl}}"],"path":["system","dept"]}
-              }
-            },
-            {
-              "name": "Get Dept Detail",
-              "request": {
-                "method": "GET",
-                "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url":{"raw":"{{baseUrl}}/system/dept/1","host":["{{baseUrl}}"],"path":["system","dept","1"]}
-              }
-            },
-            {
-              "name": "Delete Depts",
-              "request": {
-                "method": "DELETE",
-                "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url":{"raw":"{{baseUrl}}/system/dept/1","host":["{{baseUrl}}"],"path":["system","dept","1"]}
-              }
-            }
-          ]
-        },
-        {
-          "name": "Menu",
-          "item": [
-            {
-              "name": "Tree Select",
-              "request": {
-                "method": "GET",
-                "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url":{"raw":"{{baseUrl}}/system/menu/treeselect","host":["{{baseUrl}}"],"path":["system","menu","treeselect"]}
-              }
-            },
-            {
-              "name": "Role Menu Tree Select",
-              "request": {
-                "method": "GET",
-                "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url":{"raw":"{{baseUrl}}/system/menu/roleMenuTreeselect/1","host":["{{baseUrl}}"],"path":["system","menu","roleMenuTreeselect","1"]}
-              }
-            },
-            {
-              "name": "List Menus",
-              "request": {
-                "method": "GET",
-                "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url":{"raw":"{{baseUrl}}/system/menu/list","host":["{{baseUrl}}"],"path":["system","menu","list"]}
-              }
-            },
-            {
-              "name": "Add Menu",
-              "request": {
-                "method": "POST",
-                "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "header":[{"key":"Content-Type","value":"application/json"}],
-                "body":{"mode":"raw","raw":"{\n  \"menuName\": \"测试菜单\",\n  \"parentId\": 0,\n  \"orderNum\": 1,\n  \"path\": \"test\",\n  \"component\": \"system/test/index\",\n  \"menuType\": \"C\",\n  \"visible\": \"0\",\n  \"status\": \"0\",\n  \"perms\": \"system:test:list\",\n  \"icon\": \"menu\"\n}"},
-                "url":{"raw":"{{baseUrl}}/system/menu","host":["{{baseUrl}}"],"path":["system","menu"]}
-              }
-            },
-            {
-              "name": "Edit Menu",
-              "request": {
-                "method": "PUT",
-                "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "header":[{"key":"Content-Type","value":"application/json"}],
-                "body":{"mode":"raw","raw":"{\n  \"menuId\": 1,\n  \"menuName\": \"测试菜单-修改\",\n  \"parentId\": 0,\n  \"orderNum\": 1,\n  \"path\": \"test\",\n  \"component\": \"system/test/index\",\n  \"menuType\": \"C\",\n  \"visible\": \"0\",\n  \"status\": \"0\",\n  \"perms\": \"system:test:list\",\n  \"icon\": \"menu\"\n}"},
-                "url":{"raw":"{{baseUrl}}/system/menu","host":["{{baseUrl}}"],"path":["system","menu"]}
-              }
-            },
-            {
-              "name": "Get Menu Detail",
-              "request": {
-                "method": "GET",
-                "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url":{"raw":"{{baseUrl}}/system/menu/1","host":["{{baseUrl}}"],"path":["system","menu","1"]}
-              }
-            },
-            {
-              "name": "Delete Menus",
-              "request": {
-                "method": "DELETE",
-                "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url":{"raw":"{{baseUrl}}/system/menu/1","host":["{{baseUrl}}"],"path":["system","menu","1"]}
-              }
-            }
-          ]
-        },
-        {
-          "name": "Role",
-          "item": [
-            {
-              "name": "List Roles",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {
-                  "raw": "{{baseUrl}}/system/role/list?pageNum=1&pageSize=10",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["system","role","list"],
-                  "query": [
-                    {"key":"pageNum","value":"1"},
-                    {"key":"pageSize","value":"10"}
-                  ]
-                }
-              },
-              "event": [{"listen":"test","script":{"exec":["pm.test('HTTP 200',()=>pm.response.code===200);","pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"]}}]
-            },
-            {
-              "name": "Add Role",
-              "request": {
-                "method": "POST",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "header": [{"key":"Content-Type","value":"application/json"}],
-                "body": {"mode":"raw","raw":"{\n  \"roleName\": \"测试角色\",\n  \"roleKey\": \"test\",\n  \"roleSort\": 1,\n  \"status\": \"0\",\n  \"menuIds\": [1,2]\n}"},
-                "url": {"raw":"{{baseUrl}}/system/role","host":["{{baseUrl}}"],"path":["system","role"]}
-              }
-            },
-            {
-              "name": "Edit Role",
-              "request": {
-                "method": "PUT",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "header": [{"key":"Content-Type","value":"application/json"}],
-                "body": {"mode":"raw","raw":"{\n  \"roleId\": 1,\n  \"roleName\": \"测试角色-修改\",\n  \"roleKey\": \"test\",\n  \"roleSort\": 1,\n  \"status\": \"0\",\n  \"menuIds\": [1,2]\n}"},
-                "url": {"raw":"{{baseUrl}}/system/role","host":["{{baseUrl}}"],"path":["system","role"]}
-              }
-            },
-            {
-              "name": "Get Role Detail",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/system/role/1","host":["{{baseUrl}}"],"path":["system","role","1"]}
-              }
-            },
-            {
-              "name": "Delete Roles",
-              "request": {
-                "method": "DELETE",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/system/role/1","host":["{{baseUrl}}"],"path":["system","role","1"]}
-              }
-            },
-            {
-              "name": "Change Role Status",
-              "request": {
-                "method": "PUT",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "header": [{"key":"Content-Type","value":"application/json"}],
-                "body": {"mode":"raw","raw":"{\n  \"roleId\": 1,\n  \"status\": \"0\"\n}"},
-                "url": {"raw":"{{baseUrl}}/system/role/changeStatus","host":["{{baseUrl}}"],"path":["system","role","changeStatus"]}
-              }
-            },
-            {
-              "name": "Edit Role Data Scope",
-              "request": {
-                "method": "PUT",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "header": [{"key":"Content-Type","value":"application/json"}],
-                "body": {"mode":"raw","raw":"{\n  \"roleId\": 1,\n  \"dataScope\": \"2\",\n  \"deptIds\": [1,2],\n  \"deptCheckStrictly\": true\n}"},
-                "url": {"raw":"{{baseUrl}}/system/role/dataScope","host":["{{baseUrl}}"],"path":["system","role","dataScope"]}
-              }
-            },
-            {
-              "name": "Export Roles",
-              "request": {
-                "method": "POST",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "header": [{"key":"Content-Type","value":"application/x-www-form-urlencoded"}],
-                "body": {"mode":"urlencoded","urlencoded":[{"key":"roleName","value":""}]},
-                "url": {"raw":"{{baseUrl}}/system/role/export","host":["{{baseUrl}}"],"path":["system","role","export"]}
-              }
-            },
-            {
-              "name": "Role Dept Tree",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/system/role/deptTree/1","host":["{{baseUrl}}"],"path":["system","role","deptTree","1"]}
-              }
-            },
-            {
-              "name": "Allocated Users",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/system/role/authUser/allocatedList?pageNum=1&pageSize=10&roleId=1","host":["{{baseUrl}}"],"path":["system","role","authUser","allocatedList"],"query":[{"key":"pageNum","value":"1"},{"key":"pageSize","value":"10"},{"key":"roleId","value":"1"}]}
-              }
-            },
-            {
-              "name": "Unallocated Users",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/system/role/authUser/unallocatedList?pageNum=1&pageSize=10&roleId=1","host":["{{baseUrl}}"],"path":["system","role","authUser","unallocatedList"],"query":[{"key":"pageNum","value":"1"},{"key":"pageSize","value":"10"},{"key":"roleId","value":"1"}]}
-              }
-            },
-            {
-              "name": "Assign Users To Role (Select All)",
-              "request": {
-                "method": "PUT",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/system/role/authUser/selectAll?roleId=1&userIds=2,3","host":["{{baseUrl}}"],"path":["system","role","authUser","selectAll"],"query":[{"key":"roleId","value":"1"},{"key":"userIds","value":"2,3"}]}
-              }
-            },
-            {
-              "name": "Cancel Assign User",
-              "request": {
-                "method": "PUT",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "header": [{"key":"Content-Type","value":"application/json"}],
-                "body": {"mode":"raw","raw":"{\n  \"userId\": 2,\n  \"roleId\": 1\n}"},
-                "url": {"raw":"{{baseUrl}}/system/role/authUser/cancel","host":["{{baseUrl}}"],"path":["system","role","authUser","cancel"]}
-              }
-            },
-            {
-              "name": "Cancel Assign Users (All)",
-              "request": {
-                "method": "PUT",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/system/role/authUser/cancelAll?roleId=1&userIds=2,3","host":["{{baseUrl}}"],"path":["system","role","authUser","cancelAll"],"query":[{"key":"roleId","value":"1"},{"key":"userIds","value":"2,3"}]}
-              }
-            }
-          ]
-        },
-        {
-          "name": "Config",
-          "item": [
-            {
-              "name": "List Configs",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {
-                  "raw": "{{baseUrl}}/system/config/list?pageNum=1&pageSize=10",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["system","config","list"],
-                  "query": [
-                    {"key":"pageNum","value":"1"},
-                    {"key":"pageSize","value":"10"}
-                  ]
-                }
-              },
-              "event": [{"listen":"test","script":{"exec":["pm.test('HTTP 200',()=>pm.response.code===200);","pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"]}}]
-            },
-            {
-              "name": "Add Config",
-              "request": {
-                "method": "POST",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "header": [{"key":"Content-Type","value":"application/json"}],
-                "body": {"mode":"raw","raw":"{\n  \"configName\": \"初始密码长度\",\n  \"configKey\": \"sys.user.initPassword\",\n  \"configValue\": \"123456\",\n  \"configType\": \"Y\",\n  \"remark\": \"\"\n}"},
-                "url": {"raw":"{{baseUrl}}/system/config","host":["{{baseUrl}}"],"path":["system","config"]}
-              }
-            },
-            {
-              "name": "Edit Config",
-              "request": {
-                "method": "PUT",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "header": [{"key":"Content-Type","value":"application/json"}],
-                "body": {"mode":"raw","raw":"{\n  \"configId\": 1,\n  \"configName\": \"初始密码长度-修改\",\n  \"configKey\": \"sys.user.initPassword\",\n  \"configValue\": \"123456\",\n  \"configType\": \"Y\",\n  \"remark\": \"\"\n}"},
-                "url": {"raw":"{{baseUrl}}/system/config","host":["{{baseUrl}}"],"path":["system","config"]}
-              }
-            },
-            {
-              "name": "Get Config Detail",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/system/config/1","host":["{{baseUrl}}"],"path":["system","config","1"]}
-              }
-            },
-            {
-              "name": "Delete Configs",
-              "request": {
-                "method": "DELETE",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/system/config/1","host":["{{baseUrl}}"],"path":["system","config","1"]}
-              }
-            },
-            {
-              "name": "Refresh Config Cache",
-              "request": {
-                "method": "DELETE",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/system/config/refreshCache","host":["{{baseUrl}}"],"path":["system","config","refreshCache"]}
-              }
-            },
-            {
-              "name": "Get Config By Key",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/system/config/configKey/sys.user.initPassword","host":["{{baseUrl}}"],"path":["system","config","configKey","sys.user.initPassword"]}
-              }
-            },
-            {
-              "name": "Export Configs",
-              "request": {
-                "method": "POST",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "header": [{"key":"Content-Type","value":"application/x-www-form-urlencoded"}],
-                "body": {"mode":"urlencoded","urlencoded":[{"key":"configName","value":""}]},
-                "url": {"raw":"{{baseUrl}}/system/config/export","host":["{{baseUrl}}"],"path":["system","config","export"]}
-              }
-            }
-          ]
-        },
-        {
-          "name": "Notice",
-          "item": [
-            {
-              "name": "List Notices",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {
-                  "raw": "{{baseUrl}}/system/notice/list?pageNum=1&pageSize=10",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["system","notice","list"],
-                  "query": [
-                    {"key":"pageNum","value":"1"},
-                    {"key":"pageSize","value":"10"}
-                  ]
-                }
-              },
-              "event": [{"listen":"test","script":{"exec":["pm.test('HTTP 200',()=>pm.response.code===200);","pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"]}}]
-            },
-            {
-              "name": "Add Notice",
-              "request": {
-                "method": "POST",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "header": [{"key":"Content-Type","value":"application/json"}],
-                "body": {"mode":"raw","raw":"{\n  \"noticeTitle\": \"示例公告\",\n  \"noticeType\": \"1\",\n  \"noticeContent\": \"内容\",\n  \"status\": \"0\",\n  \"remark\": \"\"\n}"},
-                "url": {"raw":"{{baseUrl}}/system/notice","host":["{{baseUrl}}"],"path":["system","notice"]}
-              }
-            },
-            {
-              "name": "Edit Notice",
-              "request": {
-                "method": "PUT",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "header": [{"key":"Content-Type","value":"application/json"}],
-                "body": {"mode":"raw","raw":"{\n  \"noticeId\": 1,\n  \"noticeTitle\": \"示例公告-修改\",\n  \"noticeType\": \"2\",\n  \"noticeContent\": \"内容修改\",\n  \"status\": \"0\",\n  \"remark\": \"\"\n}"},
-                "url": {"raw":"{{baseUrl}}/system/notice","host":["{{baseUrl}}"],"path":["system","notice"]}
-              }
-            },
-            {
-              "name": "Get Notice Detail",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/system/notice/1","host":["{{baseUrl}}"],"path":["system","notice","1"]}
-              }
-            },
-            {
-              "name": "Delete Notices",
-              "request": {
-                "method": "DELETE",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/system/notice/1","host":["{{baseUrl}}"],"path":["system","notice","1"]}
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Monitor",
-      "item": [
-        {
-          "name": "Job",
-          "item": [
-            {
-              "name": "List Jobs",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {
-                  "raw": "{{baseUrl}}/monitor/job/list?pageNum=1&pageSize=10",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["monitor","job","list"],
-                  "query": [
-                    {"key":"pageNum","value":"1"},
-                    {"key":"pageSize","value":"10"}
-                  ]
-                }
-              },
-              "event": [{"listen":"test","script":{"exec":["pm.test('HTTP 200',()=>pm.response.code===200);","pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"]}}]
-            },
-            {
-              "name": "Add Job",
-              "request": {
-                "method": "POST",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "header": [{"key":"Content-Type","value":"application/json"}],
-                "body": {"mode":"raw","raw":"{\n  \"jobName\": \"示例任务\",\n  \"jobGroup\": \"DEFAULT\",\n  \"invokeTarget\": \"demo.task\",\n  \"cronExpression\": \"0/30 * * * * ?\",\n  \"misfirePolicy\": \"1\",\n  \"concurrent\": \"0\",\n  \"status\": \"0\",\n  \"remark\": \"\"\n}"},
-                "url": {"raw":"{{baseUrl}}/monitor/job","host":["{{baseUrl}}"],"path":["monitor","job"]}
-              }
-            },
-            {
-              "name": "Edit Job",
-              "request": {
-                "method": "PUT",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "header": [{"key":"Content-Type","value":"application/json"}],
-                "body": {"mode":"raw","raw":"{\n  \"jobId\": 1,\n  \"jobName\": \"示例任务-修改\",\n  \"jobGroup\": \"DEFAULT\",\n  \"invokeTarget\": \"demo.task\",\n  \"cronExpression\": \"0/20 * * * * ?\",\n  \"status\": \"0\"\n}"},
-                "url": {"raw":"{{baseUrl}}/monitor/job","host":["{{baseUrl}}"],"path":["monitor","job"]}
-              }
-            },
-            {
-              "name": "Get Job Detail",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/monitor/job/1","host":["{{baseUrl}}"],"path":["monitor","job","1"]}
-              }
-            },
-            {
-              "name": "Change Job Status",
-              "request": {
-                "method": "PUT",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "header": [{"key":"Content-Type","value":"application/json"}],
-                "body": {"mode":"raw","raw":"{\n  \"jobId\": 1,\n  \"status\": \"0\"\n}"},
-                "url": {"raw":"{{baseUrl}}/monitor/job/changeStatus","host":["{{baseUrl}}"],"path":["monitor","job","changeStatus"]}
-              }
-            },
-            {
-              "name": "Run Job Once",
-              "request": {
-                "method": "PUT",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "header": [{"key":"Content-Type","value":"application/json"}],
-                "body": {"mode":"raw","raw":"{\n  \"jobId\": 1\n}"},
-                "url": {"raw":"{{baseUrl}}/monitor/job/run","host":["{{baseUrl}}"],"path":["monitor","job","run"]}
-              }
-            },
-            {
-              "name": "Delete Jobs",
-              "request": {
-                "method": "DELETE",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/monitor/job/1","host":["{{baseUrl}}"],"path":["monitor","job","1"]}
-              }
-            },
-            {
-              "name": "Export Jobs",
-              "request": {
-                "method": "POST",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "header": [{"key":"Content-Type","value":"application/x-www-form-urlencoded"}],
-                "body": {"mode":"urlencoded","urlencoded":[{"key":"jobName","value":""}]},
-                "url": {"raw":"{{baseUrl}}/monitor/job/export","host":["{{baseUrl}}"],"path":["monitor","job","export"]}
-              }
-            }
-          ]
-        },
-        {
-          "name": "Job Log",
-          "item": [
-            {
-              "name": "List Job Logs",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {
-                  "raw": "{{baseUrl}}/monitor/jobLog/list?pageNum=1&pageSize=10",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["monitor","jobLog","list"],
-                  "query": [
-                    {"key":"pageNum","value":"1"},
-                    {"key":"pageSize","value":"10"}
-                  ]
-                }
-              },
-              "event": [{"listen":"test","script":{"exec":["pm.test('HTTP 200',()=>pm.response.code===200);","pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"]}}]
-            },
-            {
-              "name": "Delete Job Logs",
-              "request": {
-                "method": "DELETE",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/monitor/jobLog/1","host":["{{baseUrl}}"],"path":["monitor","jobLog","1"]}
-              }
-            },
-            {
-              "name": "Clean Job Logs",
-              "request": {
-                "method": "DELETE",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/monitor/jobLog/clean","host":["{{baseUrl}}"],"path":["monitor","jobLog","clean"]}
-              }
-            },
-            {
-              "name": "Export Job Logs",
-              "request": {
-                "method": "POST",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "header": [{"key":"Content-Type","value":"application/x-www-form-urlencoded"}],
-                "body": {"mode":"urlencoded","urlencoded":[{"key":"jobName","value":""}]},
-                "url": {"raw":"{{baseUrl}}/monitor/jobLog/export","host":["{{baseUrl}}"],"path":["monitor","jobLog","export"]}
-              }
-            }
-          ]
-        },
-        {
-          "name": "Log",
-          "item": [
-            {
-              "name": "Operation Log",
-              "item": [
-                {
-                  "name": "List Operation Logs",
-                  "request": {
-                    "method": "GET",
-                    "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                    "url": {
-                      "raw": "{{baseUrl}}/monitor/operlog/list?pageNum=1&pageSize=10",
-                      "host": ["{{baseUrl}}"],
-                      "path": ["monitor","operlog","list"],
-                      "query": [
-                        {"key":"pageNum","value":"1"},
-                        {"key":"pageSize","value":"10"}
-                      ]
-                    }
-                  },
-                  "event": [{"listen":"test","script":{"exec":["pm.test('HTTP 200',()=>pm.response.code===200);","pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"]}}]
-                },
-                {
-                  "name": "Delete Operation Logs",
-                  "request": {
-                    "method": "DELETE",
-                    "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                    "url": {"raw":"{{baseUrl}}/monitor/operlog/1","host":["{{baseUrl}}"],"path":["monitor","operlog","1"]}
-                  }
-                },
-                {
-                  "name": "Clean Operation Logs",
-                  "request": {
-                    "method": "DELETE",
-                    "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                    "url": {"raw":"{{baseUrl}}/monitor/operlog/clean","host":["{{baseUrl}}"],"path":["monitor","operlog","clean"]}
-                  }
-                },
-                {
-                  "name": "Export Operation Logs",
-                  "request": {
-                    "method": "POST",
-                    "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                    "header": [{"key":"Content-Type","value":"application/x-www-form-urlencoded"}],
-                    "body": {"mode":"urlencoded","urlencoded":[{"key":"title","value":""}]},
-                    "url": {"raw":"{{baseUrl}}/monitor/operlog/export","host":["{{baseUrl}}"],"path":["monitor","operlog","export"]}
-                  }
-                }
-              ]
-            },
-            {
-              "name": "Login Log",
-              "item": [
-                {
-                  "name": "List Login Logs",
-                  "request": {
-                    "method": "GET",
-                    "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                    "url": {
-                      "raw": "{{baseUrl}}/monitor/logininfor/list?pageNum=1&pageSize=10",
-                      "host": ["{{baseUrl}}"],
-                      "path": ["monitor","logininfor","list"],
-                      "query": [
-                        {"key":"pageNum","value":"1"},
-                        {"key":"pageSize","value":"10"}
-                      ]
-                    }
-                  },
-                  "event": [{"listen":"test","script":{"exec":["pm.test('HTTP 200',()=>pm.response.code===200);","pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"]}}]
-                },
-                {
-                  "name": "Delete Login Logs",
-                  "request": {
-                    "method": "DELETE",
-                    "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                    "url": {"raw":"{{baseUrl}}/monitor/logininfor/1","host":["{{baseUrl}}"],"path":["monitor","logininfor","1"]}
-                  }
-                },
-                {
-                  "name": "Clean Login Logs",
-                  "request": {
-                    "method": "DELETE",
-                    "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                    "url": {"raw":"{{baseUrl}}/monitor/logininfor/clean","host":["{{baseUrl}}"],"path":["monitor","logininfor","clean"]}
-                  }
-                },
-                {
-                  "name": "Unlock User",
-                  "request": {
-                    "method": "GET",
-                    "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                    "url": {"raw":"{{baseUrl}}/monitor/logininfor/unlock/admin","host":["{{baseUrl}}"],"path":["monitor","logininfor","unlock","admin"]}
-                  }
-                },
-                {
-                  "name": "Export Login Logs",
-                  "request": {
-                    "method": "POST",
-                    "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                    "header": [{"key":"Content-Type","value":"application/x-www-form-urlencoded"}],
-                    "body": {"mode":"urlencoded","urlencoded":[{"key":"userName","value":""}]},
-                    "url": {"raw":"{{baseUrl}}/monitor/logininfor/export","host":["{{baseUrl}}"],"path":["monitor","logininfor","export"]}
-                  }
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Cache",
-          "item": [
-            {
-              "name": "Cache Info",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/monitor/cache","host":["{{baseUrl}}"],"path":["monitor","cache"]}
-              },
-              "event": [{"listen":"test","script":{"exec":["pm.test('HTTP 200',()=>pm.response.code===200);","pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"]}}]
-            },
-            {
-              "name": "Get Cache Names",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/monitor/cache/getNames","host":["{{baseUrl}}"],"path":["monitor","cache","getNames"]}
-              },
-              "event": [{"listen":"test","script":{"exec":["pm.test('HTTP 200',()=>pm.response.code===200);"]}}]
-            },
-            {
-              "name": "Get Cache Keys",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/monitor/cache/getKeys/sys_config","host":["{{baseUrl}}"],"path":["monitor","cache","getKeys","sys_config"]}
-              },
-              "event": [{"listen":"test","script":{"exec":["pm.test('HTTP 200',()=>pm.response.code===200);"]}}]
-            },
-            {
-              "name": "Get Cache Value",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/monitor/cache/getValue/sys_config/sys.user.initPassword","host":["{{baseUrl}}"],"path":["monitor","cache","getValue","sys_config","sys.user.initPassword"]}
-              },
-              "event": [{"listen":"test","script":{"exec":["pm.test('HTTP 200',()=>pm.response.code===200);"]}}]
-            },
-            {
-              "name": "Clear Cache By Name",
-              "request": {
-                "method": "DELETE",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/monitor/cache/clearCacheName/sys_config","host":["{{baseUrl}}"],"path":["monitor","cache","clearCacheName","sys_config"]}
-              },
-              "event": [{"listen":"test","script":{"exec":["pm.test('HTTP 200',()=>pm.response.code===200);"]}}]
-            },
-            {
-              "name": "Clear Cache By Key",
-              "request": {
-                "method": "DELETE",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/monitor/cache/clearCacheKey/sys.user.initPassword","host":["{{baseUrl}}"],"path":["monitor","cache","clearCacheKey","sys.user.initPassword"]}
-              },
-              "event": [{"listen":"test","script":{"exec":["pm.test('HTTP 200',()=>pm.response.code===200);"]}}]
-            },
-            {
-              "name": "Clear All Cache",
-              "request": {
-                "method": "DELETE",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/monitor/cache/clearCacheAll","host":["{{baseUrl}}"],"path":["monitor","cache","clearCacheAll"]}
-              },
-              "event": [{"listen":"test","script":{"exec":["pm.test('HTTP 200',()=>pm.response.code===200);"]}}]
-            }
-          ]
-        },
-        {
-          "name": "Server",
-          "item": [
-            {
-              "name": "Get Server Info",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/monitor/server","host":["{{baseUrl}}"],"path":["monitor","server"]}
-              },
-              "event": [{"listen":"test","script":{"exec":["pm.test('HTTP 200',()=>pm.response.code===200);","pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"]}}]
-            }
-          ]
-        },
-        {
-          "name": "Online",
-          "item": [
-            {
-              "name": "List Online Users",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/monitor/online/list?pageNum=1&pageSize=10","host":["{{baseUrl}}"],"path":["monitor","online","list"],"query":[{"key":"pageNum","value":"1"},{"key":"pageSize","value":"10"}]}
-              },
-              "event": [{"listen":"test","script":{"exec":["pm.test('HTTP 200',()=>pm.response.code===200);","pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"]}}]
-            },
-            {
-              "name": "Force Logout",
-              "request": {
-                "method": "DELETE",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/monitor/online/abc123","host":["{{baseUrl}}"],"path":["monitor","online","abc123"]}
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Tool",
-      "item": [
-        {
-          "name": "Generator",
-          "item": [
-            {
-              "name": "List Gen Tables",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {
-                  "raw": "{{baseUrl}}/tool/gen/list?pageNum=1&pageSize=10",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["tool","gen","list"],
-                  "query": [
-                    {"key":"pageNum","value":"1"},
-                    {"key":"pageSize","value":"10"}
-                  ]
-                }
-              },
-              "event": [{"listen":"test","script":{"exec":["pm.test('HTTP 200',()=>pm.response.code===200);","pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"]}}]
-            },
-            {
-              "name": "List DB Tables",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {
-                  "raw": "{{baseUrl}}/tool/gen/db/list?pageNum=1&pageSize=10",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["tool","gen","db","list"],
-                  "query": [
-                    {"key":"pageNum","value":"1"},
-                    {"key":"pageSize","value":"10"}
-                  ]
-                }
-              },
-              "event": [{"listen":"test","script":{"exec":["pm.test('HTTP 200',()=>pm.response.code===200);","pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"]}}]
-            },
-            {
-              "name": "Import Tables",
-              "request": {
-                "method": "POST",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {
-                  "raw": "{{baseUrl}}/tool/gen/importTable?tables=sys_user,sys_dept",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["tool","gen","importTable"],
-                  "query": [
-                    {"key":"tables","value":"sys_user,sys_dept"}
-                  ]
-                }
-              },
-              "event": [{"listen":"test","script":{"exec":["pm.test('HTTP 200',()=>pm.response.code===200);","pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"]}}]
-            },
-            {
-              "name": "Edit Gen Table",
-              "request": {
-                "method": "PUT",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "header": [{"key":"Content-Type","value":"application/json"}],
-                "body": {"mode":"raw","raw":"{\n  \"tableId\": 1,\n  \"tableName\": \"sys_test\",\n  \"tableComment\": \"测试表\",\n  \"className\": \"SysTest\",\n  \"packageName\": \"module_demo\",\n  \"moduleName\": \"demo\",\n  \"businessName\": \"test\",\n  \"functionName\": \"测试管理\",\n  \"functionAuthor\": \"ruoyi\",\n  \"genType\": \"0\",\n  \"tplCategory\": \"crud\",\n  \"tplWebType\": \"element-plus\"\n}"},
-                "url": {"raw":"{{baseUrl}}/tool/gen","host":["{{baseUrl}}"],"path":["tool","gen"]}
-              }
-            },
-            {
-              "name": "Delete Gen Tables",
-              "request": {
-                "method": "DELETE",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/tool/gen/1","host":["{{baseUrl}}"],"path":["tool","gen","1"]}
-              }
-            },
-            {
-              "name": "Create Table (SQL)",
-              "request": {
-                "method": "POST",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {
-                  "raw": "{{baseUrl}}/tool/gen/createTable?sql=CREATE%20TABLE%20IF%20NOT%20EXISTS%20sys_demo(id%20INT%20PRIMARY%20KEY)%3B",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["tool","gen","createTable"],
-                  "query": [
-                    {"key":"sql","value":"CREATE TABLE IF NOT EXISTS sys_demo(id INT PRIMARY KEY);"}
-                  ]
-                }
-              }
-            },
-            {
-              "name": "Batch Generate Code (Zip)",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/tool/gen/batchGenCode?tables=sys_user,sys_dept","host":["{{baseUrl}}"],"path":["tool","gen","batchGenCode"],"query":[{"key":"tables","value":"sys_user,sys_dept"}]}
-              }
-            },
-            {
-              "name": "Generate Code To Local",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/tool/gen/genCode/sys_user","host":["{{baseUrl}}"],"path":["tool","gen","genCode","sys_user"]}
-              }
-            },
-            {
-              "name": "Get Gen Table Detail",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/tool/gen/1","host":["{{baseUrl}}"],"path":["tool","gen","1"]}
-              }
-            },
-            {
-              "name": "Preview Code",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/tool/gen/preview/1","host":["{{baseUrl}}"],"path":["tool","gen","preview","1"]}
-              }
-            },
-            {
-              "name": "Sync DB",
-              "request": {
-                "method": "GET",
-                "auth": {"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
-                "url": {"raw":"{{baseUrl}}/tool/gen/synchDb/sys_user","host":["{{baseUrl}}"],"path":["tool","gen","synchDb","sys_user"]}
-              }
-            }
-          ]
-        }
-      ]
-    }
-  ]
+	"info": {
+		"_postman_id": "d6657b29-0b58-4b88-bf2f-f78f349e7370",
+		"name": "RuoYi-FastAPI",
+		"description": "Postman collection for RuoYi-Vue3-FastAPI backend",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1381330"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Captcha Image",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('HTTP 200', () => pm.response.code === 200);",
+									"const json = pm.response.json() || {};",
+									"pm.test('biz code 200', () => json.code === 200 && json.success === true);",
+									"if (json.uuid) { pm.collectionVariables.set('uuid', json.uuid); }"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/captchaImage",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"captchaImage"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login (x-www-form-urlencoded)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('HTTP 200', () => pm.response.code === 200);",
+									"const json = pm.response.json() || {};",
+									"pm.test('biz code 200', () => json.code === 200 && json.success === true);",
+									"if (json.token) { pm.collectionVariables.set('accessToken', json.token); }"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "username",
+									"value": "{{username}}"
+								},
+								{
+									"key": "password",
+									"value": "{{password}}"
+								},
+								{
+									"key": "code",
+									"value": "{{captcha_code}}"
+								},
+								{
+									"key": "uuid",
+									"value": "{{uuid}}"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('HTTP 200', () => pm.response.code === 200);",
+									"const json = pm.response.json() || {};",
+									"pm.test('biz code 200', () => json.code === 200 && json.success === true);",
+									"pm.collectionVariables.unset('accessToken');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/logout",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"logout"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "agent",
+			"item": [
+				{
+					"name": "search assistants proxy",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful POST request\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+									"",
+									"    // 解析响应 body",
+									"    const response = pm.response.json();",
+									"",
+									"    // 提取 assistant_id",
+									"    const assistant_id = response[0].assistant_id;",
+									"",
+									"    console.log(assistant_id)",
+									"",
+									"    // 将 threadId 存储到环境变量",
+									"    pm.environment.set(\"assistant_id\", assistant_id);",
+									"",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{  \n    \"graph_id\": \"general_chatbot\",\n    \"limit\": 5,  \n    \"offset\": 0  \n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{proxy-to-langgraph}}/assistants/search",
+							"host": [
+								"{{proxy-to-langgraph}}"
+							],
+							"path": [
+								"assistants",
+								"search"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "search assistants",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful POST request\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+									"",
+									"    // 解析响应 body",
+									"    const response = pm.response.json();",
+									"",
+									"    // 提取 assistant_id",
+									"    const assistant_id = response[0].assistant_id;",
+									"",
+									"    console.log(assistant_id)",
+									"",
+									"    // 将 threadId 存储到环境变量",
+									"    pm.environment.set(\"assistant_id\", assistant_id);",
+									"",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{  \n    \"graph_id\": \"general_chatbot\",\n    \"limit\": 5,  \n    \"offset\": 0  \n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:9099/langgraph/assistants/search",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9099",
+							"path": [
+								"langgraph",
+								"assistants",
+								"search"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create a thread",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful POST request\", function () {\r",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+									"\r",
+									"    // 解析响应 body\r",
+									"    const response = pm.response.json();\r",
+									"\r",
+									"    // 提取 threadId\r",
+									"    const thread_id = response.data.threadId;\r",
+									"\r",
+									"    console.log(thread_id)\r",
+									"\r",
+									"    // 将 threadId 存储到环境变量\r",
+									"    pm.environment.set(\"thread_id\", thread_id);\r",
+									"\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{  \r\n    \"graphId\": \"general_chatbot\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/langgraph/threads",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"langgraph",
+								"threads"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "list thread(raw langgraph)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"select\": [\n        \"thread_id\",\n        \"status\",\n        \"created_at\"\n    ],\n    \"status\": \"idle\",\n    \"limit\": 1,\n    \"offset\": 0,\n    \"sort_by\": \"created_at\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/threads/search",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"threads",
+								"search"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "list thread",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"select\": [\n        \"thread_id\",\n        \"status\",\n        \"created_at\"\n    ],\n    \"status\": \"idle\",\n    \"limit\": 1,\n    \"offset\": 0,\n    \"sort_by\": \"created_at\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/langgraph/threads/search",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"langgraph",
+								"threads",
+								"search"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create a run",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful POST request\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+									"",
+									"    // 解析响应 body",
+									"    const response = pm.response.json();",
+									"",
+									"    // 提取 run_id",
+									"    const run_id = response.data.runId;",
+									"",
+									"    console.log(run_id)",
+									"",
+									"    // 将 threadId 存储到环境变量",
+									"    pm.environment.set(\"run_id\", run_id);",
+									"",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"assistantId\": \"{{assistant_id}}\",\r\n    \"input\": {\r\n        \"user_id\": \"galen\",\r\n        \"query\": \"who is current us president?\",\r\n        \"dataset_ids\":[],\r\n        \"web_search_enabled\": true\r\n    }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/langgraph/threads/{{thread_id}}/runs",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"langgraph",
+								"threads",
+								"{{thread_id}}",
+								"runs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "list runs of thread(raw langgraph)",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"select\": [\n        \"thread_id\",\n        \"status\",\n        \"created_at\"\n    ],\n    \"status\": \"idle\",\n    \"limit\": 1,\n    \"offset\": 0,\n    \"sort_by\": \"created_at\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/threads/{{thread_id}}/runs",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"threads",
+								"{{thread_id}}",
+								"runs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get a run status",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/langgraph/threads/{{thread_id}}/runs/{{run_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"langgraph",
+								"threads",
+								"{{thread_id}}",
+								"runs",
+								"{{run_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get run result",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/langgraph/threads/{{thread_id}}/runs/{{run_id}}/join",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"langgraph",
+								"threads",
+								"{{thread_id}}",
+								"runs",
+								"{{run_id}}",
+								"join"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get thread history",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"limit\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/langgraph/threads/{{thread_id}}/history",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"langgraph",
+								"threads",
+								"{{thread_id}}",
+								"history"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get role's agent",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/system/role/agent/allocatedList/2",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"system",
+								"role",
+								"agent",
+								"allocatedList",
+								"2"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "Get Info",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('HTTP 200', () => pm.response.code === 200);",
+									"pm.test('biz code 200', () => (pm.response.json()||{}).code === 200);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/getInfo",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"getInfo"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Routers",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('HTTP 200', () => pm.response.code === 200);",
+									"pm.test('biz code 200', () => (pm.response.json()||{}).code === 200);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/getRouters",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"getRouters"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Users",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('HTTP 200', () => pm.response.code === 200);",
+									"const j=pm.response.json()||{}; pm.test('biz code 200', ()=> j.code===200 && j.success===true);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/system/user/list?pageNum=1&pageSize=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"system",
+								"user",
+								"list"
+							],
+							"query": [
+								{
+									"key": "pageNum",
+									"value": "1"
+								},
+								{
+									"key": "pageSize",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Common",
+			"item": [
+				{
+					"name": "Upload File",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('HTTP 200', () => pm.response.code === 200);",
+									"pm.test('biz code 200', () => (pm.response.json()||{}).code === 200);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/common/upload",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"common",
+								"upload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Download File",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/common/download?fileName=demo.xlsx&delete=false",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"common",
+								"download"
+							],
+							"query": [
+								{
+									"key": "fileName",
+									"value": "demo.xlsx"
+								},
+								{
+									"key": "delete",
+									"value": "false"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Download Resource",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('HTTP 200', () => pm.response.code === 200);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/common/download/resource?resource=profile/upload/2021/11/21/demo.png",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"common",
+								"download",
+								"resource"
+							],
+							"query": [
+								{
+									"key": "resource",
+									"value": "profile/upload/2021/11/21/demo.png"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Proxy",
+			"item": [
+				{
+					"name": "GET /proxy/langgraph/openapi.json",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('HTTP 200', () => pm.response.code === 200);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/proxy/langgraph/openapi.json",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"proxy",
+								"langgraph",
+								"openapi.json"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET /proxy/service-a/health",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('HTTP 200', () => pm.response.code === 200);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/proxy/service-a/health",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"proxy",
+								"service-a",
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST /proxy/service-b/admin/ping",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('HTTP 200', () => pm.response.code === 200);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"ping\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/proxy/service-b/admin/ping",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"proxy",
+								"service-b",
+								"admin",
+								"ping"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "System Management",
+			"item": [
+				{
+					"name": "Post",
+					"item": [
+						{
+							"name": "List Posts",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('HTTP 200', () => pm.response.code === 200);",
+											"pm.test('biz code 200', () => (pm.response.json()||{}).code === 200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/post/list?pageNum=1&pageSize=10",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"post",
+										"list"
+									],
+									"query": [
+										{
+											"key": "pageNum",
+											"value": "1"
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add Post",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"postId\": 0,\n  \"postCode\": \"dev\",\n  \"postName\": \"开发\",\n  \"postSort\": 1,\n  \"status\": \"0\",\n  \"remark\": \"\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/system/post",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"post"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Post Detail",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/post/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"post",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Posts",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/post/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"post",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Export Posts",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "postName",
+											"value": ""
+										}
+									]
+								},
+								"url": {
+									"raw": "{{baseUrl}}/system/post/export",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"post",
+										"export"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Dict",
+					"item": [
+						{
+							"name": "Type List",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/dict/type/list?pageNum=1&pageSize=10",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"dict",
+										"type",
+										"list"
+									],
+									"query": [
+										{
+											"key": "pageNum",
+											"value": "1"
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Type Add",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"dictId\": 0,\n  \"dictName\": \"测试字典\",\n  \"dictType\": \"test_type\",\n  \"status\": \"0\",\n  \"remark\": \"\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/system/dict/type",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"dict",
+										"type"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Data List",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/dict/data/list?pageNum=1&pageSize=10",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"dict",
+										"data",
+										"list"
+									],
+									"query": [
+										{
+											"key": "pageNum",
+											"value": "1"
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Data Add",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"dictCode\": 0,\n  \"dictSort\": 1,\n  \"dictLabel\": \"值1\",\n  \"dictValue\": \"1\",\n  \"dictType\": \"test_type\",\n  \"status\": \"0\",\n  \"remark\": \"\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/system/dict/data",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"dict",
+										"data"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Type Option Select",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/dict/type/optionselect",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"dict",
+										"type",
+										"optionselect"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Dept",
+					"item": [
+						{
+							"name": "List Depts",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('HTTP 200',()=>pm.response.code===200);",
+											"pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/dept/list",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"dept",
+										"list"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List Depts Exclude",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/dept/list/exclude/100",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"dept",
+										"list",
+										"exclude",
+										"100"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add Dept",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"parentId\": 0,\n  \"deptName\": \"测试部门\",\n  \"orderNum\": 1,\n  \"leader\": \"张三\",\n  \"phone\": \"13800000000\",\n  \"email\": \"test@example.com\",\n  \"status\": \"0\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/system/dept",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"dept"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Edit Dept",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"deptId\": 1,\n  \"parentId\": 0,\n  \"deptName\": \"测试部门-修改\",\n  \"orderNum\": 1,\n  \"leader\": \"李四\",\n  \"phone\": \"13800000001\",\n  \"email\": \"test2@example.com\",\n  \"status\": \"0\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/system/dept",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"dept"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Dept Detail",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/dept/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"dept",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Depts",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/dept/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"dept",
+										"1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Menu",
+					"item": [
+						{
+							"name": "Tree Select",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/menu/treeselect",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"menu",
+										"treeselect"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Role Menu Tree Select",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/menu/roleMenuTreeselect/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"menu",
+										"roleMenuTreeselect",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List Menus",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/menu/list",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"menu",
+										"list"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add Menu",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"menuName\": \"测试菜单\",\n  \"parentId\": 0,\n  \"orderNum\": 1,\n  \"path\": \"test\",\n  \"component\": \"system/test/index\",\n  \"menuType\": \"C\",\n  \"visible\": \"0\",\n  \"status\": \"0\",\n  \"perms\": \"system:test:list\",\n  \"icon\": \"menu\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/system/menu",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"menu"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Edit Menu",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"menuId\": 1,\n  \"menuName\": \"测试菜单-修改\",\n  \"parentId\": 0,\n  \"orderNum\": 1,\n  \"path\": \"test\",\n  \"component\": \"system/test/index\",\n  \"menuType\": \"C\",\n  \"visible\": \"0\",\n  \"status\": \"0\",\n  \"perms\": \"system:test:list\",\n  \"icon\": \"menu\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/system/menu",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"menu"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Menu Detail",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/menu/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"menu",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Menus",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/menu/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"menu",
+										"1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Role",
+					"item": [
+						{
+							"name": "allocated agents",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/role/authUser/allocatedList?pageNum=1&pageSize=10&roleId=1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"role",
+										"authUser",
+										"allocatedList"
+									],
+									"query": [
+										{
+											"key": "pageNum",
+											"value": "1"
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										},
+										{
+											"key": "roleId",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Assign agents to role",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/role/authUser/selectAll?roleId=1&userIds=2,3",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"role",
+										"authUser",
+										"selectAll"
+									],
+									"query": [
+										{
+											"key": "roleId",
+											"value": "1"
+										},
+										{
+											"key": "userIds",
+											"value": "2,3"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List Roles",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('HTTP 200',()=>pm.response.code===200);",
+											"pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/role/list?pageNum=1&pageSize=10",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"role",
+										"list"
+									],
+									"query": [
+										{
+											"key": "pageNum",
+											"value": "1"
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add Role",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"roleName\": \"测试角色\",\n  \"roleKey\": \"test\",\n  \"roleSort\": 1,\n  \"status\": \"0\",\n  \"menuIds\": [1,2]\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/system/role",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"role"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Edit Role",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"roleId\": 1,\n  \"roleName\": \"测试角色-修改\",\n  \"roleKey\": \"test\",\n  \"roleSort\": 1,\n  \"status\": \"0\",\n  \"menuIds\": [1,2]\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/system/role",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"role"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Role Detail",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/role/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"role",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Roles",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/role/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"role",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Change Role Status",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"roleId\": 1,\n  \"status\": \"0\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/system/role/changeStatus",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"role",
+										"changeStatus"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Edit Role Data Scope",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"roleId\": 1,\n  \"dataScope\": \"2\",\n  \"deptIds\": [1,2],\n  \"deptCheckStrictly\": true\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/system/role/dataScope",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"role",
+										"dataScope"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Export Roles",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "roleName",
+											"value": ""
+										}
+									]
+								},
+								"url": {
+									"raw": "{{baseUrl}}/system/role/export",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"role",
+										"export"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Role Dept Tree",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/role/deptTree/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"role",
+										"deptTree",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Allocated Users",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/role/authUser/allocatedList?pageNum=1&pageSize=10&roleId=1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"role",
+										"authUser",
+										"allocatedList"
+									],
+									"query": [
+										{
+											"key": "pageNum",
+											"value": "1"
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										},
+										{
+											"key": "roleId",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Unallocated Users",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/role/authUser/unallocatedList?pageNum=1&pageSize=10&roleId=1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"role",
+										"authUser",
+										"unallocatedList"
+									],
+									"query": [
+										{
+											"key": "pageNum",
+											"value": "1"
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										},
+										{
+											"key": "roleId",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Assign Users To Role (Select All)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/role/authUser/selectAll?roleId=1&userIds=2,3",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"role",
+										"authUser",
+										"selectAll"
+									],
+									"query": [
+										{
+											"key": "roleId",
+											"value": "1"
+										},
+										{
+											"key": "userIds",
+											"value": "2,3"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Cancel Assign User",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"userId\": 2,\n  \"roleId\": 1\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/system/role/authUser/cancel",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"role",
+										"authUser",
+										"cancel"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Cancel Assign Users (All)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/role/authUser/cancelAll?roleId=1&userIds=2,3",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"role",
+										"authUser",
+										"cancelAll"
+									],
+									"query": [
+										{
+											"key": "roleId",
+											"value": "1"
+										},
+										{
+											"key": "userIds",
+											"value": "2,3"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Config",
+					"item": [
+						{
+							"name": "List Configs",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('HTTP 200',()=>pm.response.code===200);",
+											"pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/config/list?pageNum=1&pageSize=10",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"config",
+										"list"
+									],
+									"query": [
+										{
+											"key": "pageNum",
+											"value": "1"
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add Config",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"configName\": \"初始密码长度\",\n  \"configKey\": \"sys.user.initPassword\",\n  \"configValue\": \"123456\",\n  \"configType\": \"Y\",\n  \"remark\": \"\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/system/config",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"config"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Edit Config",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"configId\": 1,\n  \"configName\": \"初始密码长度-修改\",\n  \"configKey\": \"sys.user.initPassword\",\n  \"configValue\": \"123456\",\n  \"configType\": \"Y\",\n  \"remark\": \"\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/system/config",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"config"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Config Detail",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/config/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"config",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Configs",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/config/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"config",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Refresh Config Cache",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/config/refreshCache",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"config",
+										"refreshCache"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Config By Key",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/config/configKey/sys.user.initPassword",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"config",
+										"configKey",
+										"sys.user.initPassword"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Export Configs",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "configName",
+											"value": ""
+										}
+									]
+								},
+								"url": {
+									"raw": "{{baseUrl}}/system/config/export",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"config",
+										"export"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Notice",
+					"item": [
+						{
+							"name": "List Notices",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('HTTP 200',()=>pm.response.code===200);",
+											"pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/notice/list?pageNum=1&pageSize=10",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"notice",
+										"list"
+									],
+									"query": [
+										{
+											"key": "pageNum",
+											"value": "1"
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add Notice",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"noticeTitle\": \"示例公告\",\n  \"noticeType\": \"1\",\n  \"noticeContent\": \"内容\",\n  \"status\": \"0\",\n  \"remark\": \"\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/system/notice",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"notice"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Edit Notice",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"noticeId\": 1,\n  \"noticeTitle\": \"示例公告-修改\",\n  \"noticeType\": \"2\",\n  \"noticeContent\": \"内容修改\",\n  \"status\": \"0\",\n  \"remark\": \"\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/system/notice",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"notice"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Notice Detail",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/notice/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"notice",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Notices",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/system/notice/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"system",
+										"notice",
+										"1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Monitor",
+			"item": [
+				{
+					"name": "Job",
+					"item": [
+						{
+							"name": "List Jobs",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('HTTP 200',()=>pm.response.code===200);",
+											"pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/monitor/job/list?pageNum=1&pageSize=10",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"monitor",
+										"job",
+										"list"
+									],
+									"query": [
+										{
+											"key": "pageNum",
+											"value": "1"
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add Job",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"jobName\": \"示例任务\",\n  \"jobGroup\": \"DEFAULT\",\n  \"invokeTarget\": \"demo.task\",\n  \"cronExpression\": \"0/30 * * * * ?\",\n  \"misfirePolicy\": \"1\",\n  \"concurrent\": \"0\",\n  \"status\": \"0\",\n  \"remark\": \"\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/monitor/job",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"monitor",
+										"job"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Edit Job",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"jobId\": 1,\n  \"jobName\": \"示例任务-修改\",\n  \"jobGroup\": \"DEFAULT\",\n  \"invokeTarget\": \"demo.task\",\n  \"cronExpression\": \"0/20 * * * * ?\",\n  \"status\": \"0\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/monitor/job",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"monitor",
+										"job"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Job Detail",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/monitor/job/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"monitor",
+										"job",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Change Job Status",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"jobId\": 1,\n  \"status\": \"0\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/monitor/job/changeStatus",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"monitor",
+										"job",
+										"changeStatus"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Run Job Once",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"jobId\": 1\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/monitor/job/run",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"monitor",
+										"job",
+										"run"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Jobs",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/monitor/job/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"monitor",
+										"job",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Export Jobs",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "jobName",
+											"value": ""
+										}
+									]
+								},
+								"url": {
+									"raw": "{{baseUrl}}/monitor/job/export",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"monitor",
+										"job",
+										"export"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Job Log",
+					"item": [
+						{
+							"name": "List Job Logs",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('HTTP 200',()=>pm.response.code===200);",
+											"pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/monitor/jobLog/list?pageNum=1&pageSize=10",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"monitor",
+										"jobLog",
+										"list"
+									],
+									"query": [
+										{
+											"key": "pageNum",
+											"value": "1"
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Job Logs",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/monitor/jobLog/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"monitor",
+										"jobLog",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Clean Job Logs",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/monitor/jobLog/clean",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"monitor",
+										"jobLog",
+										"clean"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Export Job Logs",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "jobName",
+											"value": ""
+										}
+									]
+								},
+								"url": {
+									"raw": "{{baseUrl}}/monitor/jobLog/export",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"monitor",
+										"jobLog",
+										"export"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Log",
+					"item": [
+						{
+							"name": "Operation Log",
+							"item": [
+								{
+									"name": "List Operation Logs",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test('HTTP 200',()=>pm.response.code===200);",
+													"pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{accessToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/monitor/operlog/list?pageNum=1&pageSize=10",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"monitor",
+												"operlog",
+												"list"
+											],
+											"query": [
+												{
+													"key": "pageNum",
+													"value": "1"
+												},
+												{
+													"key": "pageSize",
+													"value": "10"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Delete Operation Logs",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{accessToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/monitor/operlog/1",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"monitor",
+												"operlog",
+												"1"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Clean Operation Logs",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{accessToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/monitor/operlog/clean",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"monitor",
+												"operlog",
+												"clean"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Export Operation Logs",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{accessToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/x-www-form-urlencoded"
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "title",
+													"value": ""
+												}
+											]
+										},
+										"url": {
+											"raw": "{{baseUrl}}/monitor/operlog/export",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"monitor",
+												"operlog",
+												"export"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Login Log",
+							"item": [
+								{
+									"name": "List Login Logs",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test('HTTP 200',()=>pm.response.code===200);",
+													"pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{accessToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/monitor/logininfor/list?pageNum=1&pageSize=10",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"monitor",
+												"logininfor",
+												"list"
+											],
+											"query": [
+												{
+													"key": "pageNum",
+													"value": "1"
+												},
+												{
+													"key": "pageSize",
+													"value": "10"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Delete Login Logs",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{accessToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/monitor/logininfor/1",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"monitor",
+												"logininfor",
+												"1"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Clean Login Logs",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{accessToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/monitor/logininfor/clean",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"monitor",
+												"logininfor",
+												"clean"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Unlock User",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{accessToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/monitor/logininfor/unlock/admin",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"monitor",
+												"logininfor",
+												"unlock",
+												"admin"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Export Login Logs",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{accessToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/x-www-form-urlencoded"
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "userName",
+													"value": ""
+												}
+											]
+										},
+										"url": {
+											"raw": "{{baseUrl}}/monitor/logininfor/export",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"monitor",
+												"logininfor",
+												"export"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Cache",
+					"item": [
+						{
+							"name": "Cache Info",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('HTTP 200',()=>pm.response.code===200);",
+											"pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/monitor/cache",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"monitor",
+										"cache"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Cache Names",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('HTTP 200',()=>pm.response.code===200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/monitor/cache/getNames",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"monitor",
+										"cache",
+										"getNames"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Cache Keys",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('HTTP 200',()=>pm.response.code===200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/monitor/cache/getKeys/sys_config",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"monitor",
+										"cache",
+										"getKeys",
+										"sys_config"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Cache Value",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('HTTP 200',()=>pm.response.code===200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/monitor/cache/getValue/sys_config/sys.user.initPassword",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"monitor",
+										"cache",
+										"getValue",
+										"sys_config",
+										"sys.user.initPassword"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Clear Cache By Name",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('HTTP 200',()=>pm.response.code===200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/monitor/cache/clearCacheName/sys_config",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"monitor",
+										"cache",
+										"clearCacheName",
+										"sys_config"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Clear Cache By Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('HTTP 200',()=>pm.response.code===200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/monitor/cache/clearCacheKey/sys.user.initPassword",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"monitor",
+										"cache",
+										"clearCacheKey",
+										"sys.user.initPassword"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Clear All Cache",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('HTTP 200',()=>pm.response.code===200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/monitor/cache/clearCacheAll",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"monitor",
+										"cache",
+										"clearCacheAll"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Server",
+					"item": [
+						{
+							"name": "Get Server Info",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('HTTP 200',()=>pm.response.code===200);",
+											"pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/monitor/server",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"monitor",
+										"server"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Online",
+					"item": [
+						{
+							"name": "List Online Users",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('HTTP 200',()=>pm.response.code===200);",
+											"pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/monitor/online/list?pageNum=1&pageSize=10",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"monitor",
+										"online",
+										"list"
+									],
+									"query": [
+										{
+											"key": "pageNum",
+											"value": "1"
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Force Logout",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/monitor/online/abc123",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"monitor",
+										"online",
+										"abc123"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Tool",
+			"item": [
+				{
+					"name": "Generator",
+					"item": [
+						{
+							"name": "List Gen Tables",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('HTTP 200',()=>pm.response.code===200);",
+											"pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/tool/gen/list?pageNum=1&pageSize=10",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"tool",
+										"gen",
+										"list"
+									],
+									"query": [
+										{
+											"key": "pageNum",
+											"value": "1"
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List DB Tables",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('HTTP 200',()=>pm.response.code===200);",
+											"pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/tool/gen/db/list?pageNum=1&pageSize=10",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"tool",
+										"gen",
+										"db",
+										"list"
+									],
+									"query": [
+										{
+											"key": "pageNum",
+											"value": "1"
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Import Tables",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('HTTP 200',()=>pm.response.code===200);",
+											"pm.test('biz code 200',()=> (pm.response.json()||{}).code===200);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/tool/gen/importTable?tables=sys_user,sys_dept",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"tool",
+										"gen",
+										"importTable"
+									],
+									"query": [
+										{
+											"key": "tables",
+											"value": "sys_user,sys_dept"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Edit Gen Table",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"tableId\": 1,\n  \"tableName\": \"sys_test\",\n  \"tableComment\": \"测试表\",\n  \"className\": \"SysTest\",\n  \"packageName\": \"module_demo\",\n  \"moduleName\": \"demo\",\n  \"businessName\": \"test\",\n  \"functionName\": \"测试管理\",\n  \"functionAuthor\": \"ruoyi\",\n  \"genType\": \"0\",\n  \"tplCategory\": \"crud\",\n  \"tplWebType\": \"element-plus\"\n}"
+								},
+								"url": {
+									"raw": "{{baseUrl}}/tool/gen",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"tool",
+										"gen"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Gen Tables",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/tool/gen/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"tool",
+										"gen",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create Table (SQL)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/tool/gen/createTable?sql=CREATE TABLE IF NOT EXISTS sys_demo(id INT PRIMARY KEY);",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"tool",
+										"gen",
+										"createTable"
+									],
+									"query": [
+										{
+											"key": "sql",
+											"value": "CREATE TABLE IF NOT EXISTS sys_demo(id INT PRIMARY KEY);"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Batch Generate Code (Zip)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/tool/gen/batchGenCode?tables=sys_user,sys_dept",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"tool",
+										"gen",
+										"batchGenCode"
+									],
+									"query": [
+										{
+											"key": "tables",
+											"value": "sys_user,sys_dept"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Generate Code To Local",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/tool/gen/genCode/sys_user",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"tool",
+										"gen",
+										"genCode",
+										"sys_user"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Gen Table Detail",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/tool/gen/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"tool",
+										"gen",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Preview Code",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/tool/gen/preview/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"tool",
+										"gen",
+										"preview",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Sync DB",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/tool/gen/synchDb/sys_user",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"tool",
+										"gen",
+										"synchDb",
+										"sys_user"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:9099"
+		},
+		{
+			"key": "accessToken",
+			"value": ""
+		},
+		{
+			"key": "uuid",
+			"value": ""
+		},
+		{
+			"key": "captcha_code",
+			"value": ""
+		},
+		{
+			"key": "username",
+			"value": "admin"
+		},
+		{
+			"key": "password",
+			"value": "admin123"
+		},
+		{
+			"key": "proxy-to-langgraph",
+			"value": "http://localhost:9099/proxy/langgraph",
+			"type": "string",
+			"description": {
+				"content": "",
+				"type": "text/plain"
+			}
+		}
+	]
 }

@@ -74,6 +74,16 @@ class RedisSettings(BaseSettings):
     redis_database: int = 2
 
 
+class RagflowSettings(BaseSettings):
+    """
+    Ragflow配置
+    """
+
+    ragflow_api_url: str = 'http://localhost'
+    ragflow_email: str = 'service@ruoyi.com'
+    ragflow_password: str = 'Service!23'
+
+
 class GenSettings:
     """
     代码生成配置
@@ -198,10 +208,18 @@ class GetConfig:
     @lru_cache()
     def get_upload_config(self):
         """
-        获取数据库配置
+        获取上传配置
         """
         # 实例上传配置
         return UploadSettings()
+
+    @lru_cache()
+    def get_ragflow_config(self):
+        """
+        获取Ragflow配置
+        """
+        # 实例化Ragflow配置模型
+        return RagflowSettings()
 
     @staticmethod
     def parse_cli_args():
@@ -248,3 +266,5 @@ RedisConfig = get_config.get_redis_config()
 GenConfig = get_config.get_gen_config()
 # 上传配置
 UploadConfig = get_config.get_upload_config()
+# Ragflow配置
+RagflowConfig = get_config.get_ragflow_config()
