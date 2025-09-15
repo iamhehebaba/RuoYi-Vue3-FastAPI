@@ -50,13 +50,16 @@ class RagflowClient:
                 backend=default_backend()
             )
             
-            # 加密密码
+            # 第一步：对明文密码进行Base64编码（与JavaScript版本保持一致）
+            password_base64 = base64.b64encode(password.encode('utf-8')).decode('utf-8')
+            
+            # 第二步：对Base64编码后的密码进行RSA加密
             encrypted = public_key.encrypt(
-                password.encode('utf-8'),
+                password_base64.encode('utf-8'),
                 padding.PKCS1v15()
             )
             
-            # Base64编码
+            # 第三步：对加密结果进行Base64编码
             return base64.b64encode(encrypted).decode('utf-8')
         except Exception as e:
             logger.error(f"密码加密失败: {e}")
@@ -70,7 +73,7 @@ class RagflowClient:
                 
                 # 检查是否存在有效token
                 token_info = await dao.get_token_by_email(self.email)
-                if token_info and not dao.is_token_expired(token_info.token_create_time):
+                if token_info and not dao.is_token_expired(token_info.token_refresh_time):
                     return token_info.token
                 
                 # token不存在或已过期，重新登录
@@ -193,7 +196,9 @@ class RagflowClient:
                         kwargs['headers'] = headers
                         response = self.session.request(method, url, **kwargs)
                 
-                return response
+                api_response = response.json()
+                logger.info(f"ragflow 响应: {api_response}")
+                return api_response                
                 
             except Exception as e:
                 logger.error(f"请求过程中发生错误: {e}")
