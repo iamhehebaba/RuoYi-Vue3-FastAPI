@@ -20,7 +20,7 @@ async def get_llm_factories(
     current_user: CurrentUserModel = Depends(LoginService.get_current_user),
 ):
     """
-    列出所有LLM factories：利用RagflowClient向ragflow转发请求http://{{RAGFLOW_API_URL}}/v1/llm/factories,然后再把请求结果返回
+    列出所有LLM factories
     """
 
     logger.info(f"用户 {current_user.user.user_name} 请求获取LLM factories列表")
@@ -40,7 +40,7 @@ async def get_my_llms(
     current_user: CurrentUserModel = Depends(LoginService.get_current_user),
 ):
     """
-    获取我的LLMs：利用RagflowClient向ragflow转发请求http://{{RAGFLOW_API_URL}}/v1/llm/my_llms,然后再把请求结果返回
+    获取我的LLMs
     """
 
     logger.info(f"用户 {current_user.user.user_name} 请求获取我的LLMs列表")
@@ -61,7 +61,7 @@ async def delete_llm(
     current_user: CurrentUserModel = Depends(LoginService.get_current_user),
 ):
     """
-    删除LLM：利用RagflowClient向ragflow转发请求http://{{RAGFLOW_API_URL}}/v1/llm/delete_llm,然后再把请求结果返回
+    删除LLM
     """
 
     logger.info(f"用户 {current_user.user.user_name} 请求删除LLM，请求数据: {payload}")
@@ -82,7 +82,7 @@ async def set_api_key(
     current_user: CurrentUserModel = Depends(LoginService.get_current_user),
 ):
     """
-    设置API Key：利用RagflowClient向ragflow转发请求http://{{RAGFLOW_API_URL}}/v1/llm/set_api_key,然后再把请求结果返回
+    设置API Key
     """
 
     logger.info(f"用户 {current_user.user.user_name} 请求设置API Key，请求数据: {payload}")
@@ -103,7 +103,7 @@ async def set_default_model(
     current_user: CurrentUserModel = Depends(LoginService.get_current_user),
 ):
     """
-    设置默认模型：利用RagflowClient向ragflow转发请求http://{{RAGFLOW_API_URL}}/v1/user/set_tenant_info,然后再把请求结果返回
+    设置默认模型
     """
 
     logger.info(f"用户 {current_user.user.user_name} 请求设置默认模型，请求数据: {payload}")
