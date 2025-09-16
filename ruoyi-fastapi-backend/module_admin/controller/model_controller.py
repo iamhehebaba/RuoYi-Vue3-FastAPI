@@ -13,7 +13,7 @@ from typing import Dict, Any
 modelController = APIRouter(prefix='/ragflow', tags=['模型管理'])
 
 # 任何具有模型添加权限的用户都可以查看系统的LLM factories
-@modelController.get('/v1/llm/factories', dependencies=[Depends(CheckUserInterfaceAuth(['system:model:add']))])
+@modelController.get('/v1/llm/factories', dependencies=[Depends(CheckUserInterfaceAuth(['model:model:add']))])
 async def get_llm_factories(
     request: Request,
     db: AsyncSession = Depends(get_db),
@@ -33,7 +33,7 @@ async def get_llm_factories(
 
 
 # 任何具有模型添加权限的用户都可以查看自己的LLMs
-@modelController.get('/v1/llm/my_llms', dependencies=[Depends(CheckUserInterfaceAuth(['system:model:add', 'system:model:list', 'system:model:remove', 'system:model:config'], False))])
+@modelController.get('/v1/llm/my_llms', dependencies=[Depends(CheckUserInterfaceAuth(['model:model:add', 'model:model:list', 'model:model:remove', 'model:model:config'], False))])
 async def get_my_llms(
     request: Request,
     db: AsyncSession = Depends(get_db),
@@ -53,7 +53,7 @@ async def get_my_llms(
 
 
 # 任何具有模型删除权限的用户都可以删除LLM
-@modelController.post('/v1/llm/delete_llm', dependencies=[Depends(CheckUserInterfaceAuth(['system:model:remove']))])
+@modelController.post('/v1/llm/delete_llm', dependencies=[Depends(CheckUserInterfaceAuth(['model:model:remove']))])
 async def delete_llm(
     request: Request,
     payload: Dict[str, Any],
