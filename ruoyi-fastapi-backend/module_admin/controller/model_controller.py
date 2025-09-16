@@ -71,3 +71,45 @@ async def delete_llm(
     
     logger.info("成功删除LLM")
     return ResponseUtil.success(data=delete_result, msg="删除LLM成功")
+
+
+# 任何具有模型添加权限的用户都可以设置API Key
+@modelController.post('/v1/llm/set_api_key', dependencies=[Depends(CheckUserInterfaceAuth(['model:model:add']))])
+async def set_api_key(
+    request: Request,
+    payload: Dict[str, Any],
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
+):
+    """
+    设置API Key：利用RagflowClient向ragflow转发请求http://{{RAGFLOW_API_URL}}/v1/llm/set_api_key,然后再把请求结果返回
+    """
+
+    logger.info(f"用户 {current_user.user.user_name} 请求设置API Key，请求数据: {payload}")
+    
+    # 调用ModelService设置API Key
+    set_result = await ModelService.set_api_key_service(payload)
+    
+    logger.info("成功设置API Key")
+    return ResponseUtil.success(data=set_result, msg="设置API Key成功")
+
+
+# 任何具有模型配置权限的用户都可以设置默认模型
+@modelController.post('/v1/llm/set_default_model', dependencies=[Depends(CheckUserInterfaceAuth(['model:model:config']))])
+async def set_default_model(
+    request: Request,
+    payload: Dict[str, Any],
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
+):
+    """
+    设置默认模型：利用RagflowClient向ragflow转发请求http://{{RAGFLOW_API_URL}}/v1/user/set_tenant_info,然后再把请求结果返回
+    """
+
+    logger.info(f"用户 {current_user.user.user_name} 请求设置默认模型，请求数据: {payload}")
+    
+    # 调用ModelService设置默认模型
+    set_result = await ModelService.set_default_model_service(payload)
+    
+    logger.info("成功设置默认模型")
+    return ResponseUtil.success(data=set_result, msg="设置默认模型成功")
