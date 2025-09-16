@@ -30,16 +30,14 @@ class RagflowDao:
             if existing_token:
                 # 更新现有记录
                 existing_token.token = token
-                existing_token.token_create_time = datetime.now()
-                existing_token.update_time = datetime.now()
+                existing_token.token_refresh_time = datetime.now()
             else:
                 # 创建新记录
                 new_token = RagflowToken(
                     email=email,
                     token=token,
-                    token_create_time=datetime.now(),
-                    create_time=datetime.now(),
-                    update_time=datetime.now()
+                    token_refresh_time=datetime.now(),
+                    create_time=datetime.now()
                 )
                 self.db.add(new_token)
             
@@ -62,10 +60,10 @@ class RagflowDao:
             print(f"删除token失败: {e}")
             return False
     
-    def is_token_expired(self, token_create_time: datetime, expire_hours: int = 24) -> bool:
+    def is_token_expired(self, token_refresh_time: datetime, expire_hours: int = 24) -> bool:
         """检查token是否过期"""
-        if not token_create_time:
+        if not token_refresh_time:
             return True
         
-        expire_time = token_create_time + timedelta(hours=expire_hours)
+        expire_time = token_refresh_time + timedelta(hours=expire_hours)
         return datetime.now() > expire_time

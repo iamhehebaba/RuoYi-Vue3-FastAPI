@@ -269,18 +269,18 @@ insert into sys_menu values(117,  '系统接口', 3,   '3', 'swagger',    'tool/
 insert into sys_menu values(500,  '操作日志', 108, '1', 'operlog',    'monitor/operlog/index',    '', '', 1, 0, 'C', '0', '0', 'monitor:operlog:list',    'form',          'admin', current_timestamp, '', null, '操作日志菜单');
  insert into sys_menu values(501,  '登录日志', 108, '2', 'logininfor', 'monitor/logininfor/index', '', '', 1, 0, 'C', '0', '0', 'monitor:logininfor:list', 'logininfor',    'admin', current_timestamp, '', null, '登录日志菜单');
  -- 模型管理子菜单
- insert into sys_menu values(502,  '模型添加', 118, '1', 'model/add',    'system/model/add',       '', '', 1, 0, 'C', '0', '0', 'system:model:add',       'plus',         'admin', current_timestamp, '', null, '模型添加菜单');
- insert into sys_menu values(503,  '模型列表', 118, '2', 'model/list',   'system/model/list',      '', '', 1, 0, 'C', '0', '0', 'system:model:list',      'list',         'admin', current_timestamp, '', null, '模型列表菜单');  
- insert into sys_menu values(504,  '模型删除', 118, '3', 'model/delete', 'system/model/delete',    '', '', 1, 0, 'C', '0', '0', 'system:model:remove',    'delete',       'admin', current_timestamp, '', null, '模型删除菜单');
- insert into sys_menu values(505,  '默认配置', 118, '4', 'model/config', 'system/model/config',    '', '', 1, 0, 'C', '0', '0', 'system:model:config',    'edit',         'admin', current_timestamp, '', null, '默认配置菜单');
- -- 知识库管理子菜单
-insert into sys_menu values('506',  '知识库添加', '119', '1', 'kb/add',    'system/kb/add',       '', '', 1, 0, 'C', '0', '0', 'system:kb:add',       'add',         'admin', sysdate(), '', null, '知识库添加菜单');
-insert into sys_menu values('507',  '知识库修改', '119', '2', 'kb/edit',   'system/kb/edit',      '', '', 1, 0, 'C', '0', '0', 'system:kb:edit',      'edit',         'admin', sysdate(), '', null, '知识库修改菜单');
-insert into sys_menu values('508',  '知识库删除', '119', '3', 'kb/delete', 'system/kb/delete',    '', '', 1, 0, 'C', '0', '0', 'system:kb:remove',    'delete',       'admin', sysdate(), '', null, '知识库删除菜单');
-insert into sys_menu values('509',  '知识库列表', '119', '4', 'kb/list',   'system/kb/list',      '', '', 1, 0, 'C', '0', '0', 'system:kb:list',      'list',         'admin', sysdate(), '', null, '知识库列表菜单');
-insert into sys_menu values('510',  '文档添加', '119', '5', 'kb/addDocument',     'system/kb/addDocument',        '', '', 1, 0, 'C', '0', '0', 'system:kb:addDocument',        'add',       'admin', sysdate(), '', null, '文档添加菜单');
-insert into sys_menu values('511',  '文档删除', '119', '6', 'kb/deleteDocument',  'system/kb/deleteDocument',     '', '', 1, 0, 'C', '0', '0', 'system:kb:deleteDocument',     'delete',       'admin', sysdate(), '', null, '文档删除菜单');
-insert into sys_menu values('512',  '文档列表', '119', '7', 'kb/listDocument',    'system/kb/listDocument',       '', '', 1, 0, 'C', '0', '0', 'system:kb:listDocument',       'list',         'admin', sysdate(), '', null, '文档列表菜单');
+insert into sys_menu values('502',  '模型添加', '118', '1', 'model/add',    'system/model/add',       '', '', 1, 0, 'C', '0', '0', 'model:model:add',       'add',         'admin', current_timestamp, '', null, '模型添加菜单');
+insert into sys_menu values('503',  '模型列表', '118', '2', 'model/list',   'system/model/list',      '', '', 1, 0, 'C', '0', '0', 'model:model:list',      'list',         'admin', current_timestamp, '', null, '模型列表菜单');  
+insert into sys_menu values('504',  '模型删除', '118', '3', 'model/delete', 'system/model/delete',    '', '', 1, 0, 'C', '0', '0', 'model:model:remove',    'delete',       'admin', current_timestamp, '', null, '模型删除菜单');
+insert into sys_menu values('505',  '默认配置', '118', '4', 'model/config', 'system/model/config',    '', '', 1, 0, 'C', '0', '0', 'model:model:config',    'edit',         'admin', current_timestamp, '', null, '默认配置菜单');
+-- 知识库管理子菜单
+insert into sys_menu values('506',  '知识库添加', '119', '1', 'kb/add',    'system/kb/add',       '', '', 1, 0, 'C', '0', '0', 'kb:kb:add',       'add',         'admin', current_timestamp, '', null, '知识库添加菜单');
+insert into sys_menu values('507',  '知识库修改', '119', '2', 'kb/edit',   'system/kb/edit',      '', '', 1, 0, 'C', '0', '0', 'kb:kb:edit',      'edit',         'admin', current_timestamp, '', null, '知识库修改菜单'); 
+insert into sys_menu values('508',  '知识库删除', '119', '3', 'kb/delete', 'system/kb/delete',    '', '', 1, 0, 'C', '0', '0', 'kb:kb:remove',    'delete',       'admin', current_timestamp, '', null, '知识库删除菜单');
+insert into sys_menu values('509',  '知识库列表', '119', '4', 'kb/list',   'system/kb/list',      '', '', 1, 0, 'C', '0', '0', 'kb:kb:list',      'list',         'admin', current_timestamp, '', null, '知识库列表菜单');
+insert into sys_menu values('510',  '文档添加', '119', '5', 'kb/addDocument',     'system/kb/addDocument',        '', '', 1, 0, 'C', '0', '0', 'kb:docs:add',        'add',       'admin', current_timestamp, '', null, '文档添加菜单');
+insert into sys_menu values('511',  '文档删除', '119', '6', 'kb/deleteDocument',  'system/kb/deleteDocument',     '', '', 1, 0, 'C', '0', '0', 'kb:docs:delete',     'delete',       'admin', current_timestamp, '', null, '文档删除菜单');
+insert into sys_menu values('512',  '文档列表', '119', '7', 'kb/listDocument',    'system/kb/listDocument',       '', '', 1, 0, 'C', '0', '0', 'kb:docs:list',       'list',         'admin', current_timestamp, '', null, '文档列表菜单');
 
 -- 用户管理按钮
 insert into sys_menu values(1000, '用户查询', 100, '1',  '', '', '', '', 1, 0, 'F', '0', '0', 'system:user:query',          '#', 'admin', current_timestamp, '', null, '');
@@ -1101,8 +1101,8 @@ comment on column sys_agent.created_by is '创建者';
 comment on column sys_agent.status is '智能体状态（0正常,1停用）';
 comment on table sys_agent is '智能体表';
 
-insert into sys_agent values('general_chatbot', '', '通用聊天智能体', '通用聊天智能体', '通用聊天智能体', 'admin', '0', 1, sysdate());
-insert into sys_agent values('ppt_master', '', 'PPT大师', 'PPT大师', 'PPT大师', 'admin', '0', 2, sysdate());
+insert into sys_agent values('general_chatbot', '', '通用聊天智能体', '通用聊天智能体', '通用聊天智能体', 'admin', '0', 1, current_timestamp);
+insert into sys_agent values('ppt_master', '', 'PPT大师', 'PPT大师', 'PPT大师', 'admin', '0', 2, current_timestamp);
 
 
 -- ----------------------------
