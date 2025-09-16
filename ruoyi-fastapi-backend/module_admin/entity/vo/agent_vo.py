@@ -10,10 +10,9 @@ class AgentModel(BaseModel):
     """
     model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
 
-    # id: int = Field(..., description="智能体ID")
     graph_id: Optional[str] = Field(None, description="智能体图ID") 
+    assistant_id: Optional[str] = Field(None, description="智能体ID")
     name: Optional[str] = Field(None, description="智能体名称")
-    # role_id: Optional[int] = Field(None, description="关联角色ID")
     status: Optional[str] = Field(None, description="状态")
     description: Optional[str] = Field(None, description="智能体描述")
     remark: Optional[str] = Field(None, description="备注")
