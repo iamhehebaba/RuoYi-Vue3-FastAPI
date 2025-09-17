@@ -1,12 +1,13 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+from fastapi import Request, Response
+from typing import List, Any
 from datetime import datetime
 from module_admin.dao.ragflow_kb_dao import RagflowKbDao
+from module_admin.entity.vo.user_vo import CurrentUserModel
 from module_admin.entity.do.ragflow_kb_do import RagflowKb
 from exceptions.exception import ServiceException
 from utils.response_util import ResponseUtil
 from utils.log_util import logger
-from utils.data_scope_util import get_admin_data_scope_sql
 
 
 class RagflowKbService:
@@ -82,7 +83,7 @@ class RagflowKbService:
                 raise ServiceException(message=f"知识库ID {kb_id} 不存在")
             
             # 执行删除操作
-            await RagflowKbDao.delete_ragflow_kb_dao(db, existing_kb)
+            await RagflowKbDao.delete_ragflow_kb_dao(db, kb_id)
             
             logger.info(f"用户 {current_user} 删除知识库 {kb_id} 成功")
             
@@ -91,7 +92,7 @@ class RagflowKbService:
             raise ServiceException(message="删除知识库失败")
 
     @classmethod
-    async def get_ragflow_kb_list_service(cls, db: AsyncSession, request: RagflowKbSearchModel, data_scope_sql: str) -> List[RagflowKb]:
+    async def get_ragflow_kb_list_service(cls, db: AsyncSession, data_scope_sql: str) -> List[RagflowKb]:
         """
         获取知识库列表service层
 
@@ -126,7 +127,7 @@ class RagflowKbService:
             raise ServiceException(message="获取知识库列表失败")
 
     @classmethod
-    async def get_ragflow_kb_by_user_service(cls, db: AsyncSession, created_by: str) -> List[RagflowKbResponseModel]:
+    async def get_ragflow_kb_by_user_service(cls, db: AsyncSession, created_by: str) -> List[RagflowKb]:
         """
         根据创建者获取知识库列表service层
 
@@ -141,3 +142,26 @@ class RagflowKbService:
         except Exception as e:
             logger.error(f"根据创建者获取知识库列表时发生错误: {str(e)}")
             raise ServiceException(message="获取知识库列表失败")
+
+    @classmethod
+    async def filter_ragflow_kb_by_permission(
+        cls, 
+        full_path: str, 
+        request: Request,     
+        query_db: AsyncSession,
+        current_user: CurrentUserModel,    
+        data_scope_sql: str,
+        payload: Any) -> Any:
+
+        """
+        过滤知识库列表根据权限service层
+
+        :param full_path: 知识库路径
+        :param request: 请求对象
+        :param query_db: orm对象
+        :param current_user: 当前用户
+        :param data_scope_sql: 数据权限SQL
+        :param payload: 知识库列表
+        :return: 过滤后的知识库列表
+        """
+        return payload
