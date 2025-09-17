@@ -1,10 +1,11 @@
 from __future__ import annotations
-
 from typing import Any, Dict, List, Optional, Union
 
 from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import JSONResponse
+from module_admin.aspect.data_scope import GetDataScope
 
+from config.get_db import get_db
 from module_admin.aspect.interface_auth import CheckUserInterfaceAuth
 from module_admin.service.login_service import LoginService
 from module_admin.entity.vo.user_vo import CurrentUserModel
@@ -170,7 +171,13 @@ async def _require_permission_for_path(
     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     dependencies=[Depends(_require_permission_for_path)],
 )
-async def ragflow_model_proxy_all(full_path: str, request: Request) -> Response:
+async def ragflow_model_proxy_all(
+    full_path: str, 
+    request: Request,     
+    query_db: AsyncSession = Depends(get_db),
+    current_user: CurrentUserModel = Depends(LoginService.get_current_user),    
+    data_scope_sql: str = Depends(GetDataScope('RagflowKb')),
+) -> Response:
     """
     统一Ragflow模型API代理入口：匹配 RULES 并转发请求。
     """
