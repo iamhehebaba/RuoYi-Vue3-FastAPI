@@ -2,10 +2,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from datetime import datetime, timedelta
 from typing import Optional
-from module_admin.entity.do.ragflow_do import RagflowToken
+from module_admin.entity.do.ragflow_token_do import RagflowToken
 
 
-class RagflowDao:
+class RagflowTokenDao:
     """Ragflow Token数据访问层"""
     
     def __init__(self, db: AsyncSession):
