@@ -1,5 +1,7 @@
 from __future__ import annotations
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Callable, Awaitable
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import JSONResponse
@@ -8,6 +10,7 @@ from module_admin.aspect.data_scope import GetDataScope
 from config.get_db import get_db
 from module_admin.aspect.interface_auth import CheckUserInterfaceAuth
 from module_admin.service.login_service import LoginService
+from module_admin.service.ragflow_kb_service import RagflowKbService
 from module_admin.entity.vo.user_vo import CurrentUserModel
 from utils.ragflow_util import ragflow_client
 from utils.log_util import logger
@@ -38,6 +41,7 @@ class RagflowModelRule(Dict[str, Any]):
     perm_strict: Optional[bool]  # 权限为列表时是否要求全部满足
     upstream_path: Optional[str]  # 如果有值，则使用此路径替换path_prefix的值
     description: Optional[str]
+    post_processor: Optional[Callable[[str, Request, AsyncSession, CurrentUserModel, str, Any], Awaitable[Any]]]  # 后处理函数
 
 
 # 根据 model_controller.py 中的API配置转发规则
@@ -80,7 +84,8 @@ RULES: List[RagflowModelRule] = [
     {
         "path_prefix": "/v1/kb/list",   # anyone can list his own kb
         "method": "POST",
-        "descriptioni": "list all kbs for current user based on his role assignments"
+        "descriptioni": "list all kbs for current user based on his role assignments",
+        "post_processor": RagflowKbService.filter_ragflow_kb_by_permission
     },    
     {
         "path_prefix": "/v1/kb/create",
@@ -225,6 +230,12 @@ async def ragflow_model_proxy_all(
             )
         
         logger.info(f"Ragflow API {method} {actual_path} 调用成功")
+        
+        # 如果配置了后处理函数，则调用进行后处理
+        if rule.get("post_processor"):
+            response_data = await rule["post_processor"](
+                full_path, request, query_db, current_user, data_scope_sql, response_data
+            )
         
         # 返回响应
         return JSONResponse(

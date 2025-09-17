@@ -2,7 +2,6 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List
 from module_admin.entity.do.ragflow_kb_do import RagflowKb
-from module_admin.entity.vo.ragflow_kb_vo import RagflowKbSearchModel, RagflowKbDeleteModel
 
 
 class RagflowKbDao:
@@ -37,7 +36,7 @@ class RagflowKbDao:
         return kb
 
     @classmethod
-    async def delete_ragflow_kb_dao(cls, db: AsyncSession, kb: RagflowKbDeleteModel):
+    async def delete_ragflow_kb_dao(cls, db: AsyncSession, kb_id: str):
         """
         删除知识库数据库操作
 
@@ -45,7 +44,7 @@ class RagflowKbDao:
         :param kb: 知识库删除对象
         :return:
         """
-        await db.execute(delete(RagflowKb).where(RagflowKb.id == kb.id))
+        await db.execute(delete(RagflowKb).where(RagflowKb.id == kb_id))
         await db.commit()
 
     @classmethod
