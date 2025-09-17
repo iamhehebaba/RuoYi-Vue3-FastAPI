@@ -1150,8 +1150,8 @@ create table ragflow_token (
   nickname          varchar(100)    not null,
   encoded_password  varchar(100)    not null,
   token             varchar(500)    not null,
-  token_refresh_time timestamp      not null,
-  create_time       timestamp,
+  token_refresh_time timestamp(0)   not null,
+  create_time       timestamp(0),
   primary key (email),
 ) engine=innodb comment = 'ragflow token表';
 
@@ -1161,3 +1161,17 @@ comment on ragflow_token.encoded_password is '密码';
 comment on ragflow_token.token is '认证token';
 comment on ragflow_token.token_refresh_time is 'token刷新时间';
 comment on ragflow_token.create_time is '创建时间';
+
+drop table if exists ragflow_kb;
+create table ragflow_kb (
+  id                varchar(100)    not null,
+  dept_id           bigint(20)      default null,
+  created_by        varchar(64)     default 'admin',
+  created_at        timestamp(0),
+  primary key (id)
+) engine=innodb comment = 'ragflow kb表';
+
+comment on ragflow_kb.id is 'id';
+comment on ragflow_kb.dept_id is '部门ID';
+comment on ragflow_kb.created_by is '创建者';
+comment on ragflow_kb.created_at is '创建时间';

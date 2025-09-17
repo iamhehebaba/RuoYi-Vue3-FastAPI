@@ -3,6 +3,7 @@ import base64
 import json
 import logging
 import asyncio
+import re
 from typing import Optional, Dict, Any
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,6 +30,9 @@ class RagflowClient:
     支持自动注册、登录、token管理和请求转发
     """
 
+    USER_NOT_REGISTERED_CODE = 109
+    TOKEN_UNAUTHORIZED_CODE = 401
+
     def __init__(self):
         self.base_url = RagflowConfig.ragflow_api_url
         self.email = RagflowConfig.ragflow_email
@@ -36,6 +40,29 @@ class RagflowClient:
         self.session = requests.Session()
         self.session.timeout = 30
         
+
+
+    def _email_not_registered(self, msg):
+        """
+        判断Ragflow服务器返回的消息中是否包含指定的email未注册错误
+        
+        :param msg: 服务器返回的消息
+        :return: 如果消息中包含指定的email未注册错误，则返回True；否则返回False
+        """
+
+        pattern = r"email: ([\w\.-]+@[\w\.-]+) is not registered"
+        
+        # 使用 re.match() 方法检查输入字符串是否匹配
+        match = re.match(pattern, msg)
+        
+        if match:
+            # 提取匹配的 email 部分
+            extracted_email = match.group(1)
+            # 比较提取的 email 和指定的 email
+            return extracted_email.lower() == self.email.lower()
+        
+        return False   
+
     def _encrypt_password(self, password: str) -> str:
         """
         使用RSA公钥加密密码
@@ -112,7 +139,7 @@ class RagflowClient:
             logger.error(f"注册过程中发生错误: {e}")
             return False
 
-    async def refresh_token(self, db: AsyncSession) -> Optional[str]:
+    async def _refresh_token(self, db: AsyncSession) -> Optional[str]:
         """
         刷新token：删除过期token并重新认证
         
@@ -147,8 +174,16 @@ class RagflowClient:
                 headers={"Content-Type": "application/json"},
                 timeout=30
             )
-            
-            if response.status_code == 200:
+
+            if await self._register_needed(response):
+                logger.warning("用户未注册，尝试注册...")
+                if await self._register():
+                    # 注册成功后重新登录
+                    return await self._login_and_save_token(db, dao)      
+                else:
+                    logger.error("注册失败！请检查ragflow的log获取详细信息")
+                    return None          
+            else:
                 # 从响应头获取token
                 token = response.headers.get('authorization')
                 if token:
@@ -157,17 +192,29 @@ class RagflowClient:
                     logger.info(f"用户 {self.email} 登录成功，token已保存")
                     return token
                 else:
-                    logger.error("登录成功但未获取到token")
+                    logger.error("登录成功但未获取到token！请检查ragflow的log获取详细信息")
                     return None
-            else:
-                logger.error(f"登录失败: {response.status_code} - {response.text}")
-                # 如果是401错误，可能需要先注册
-                if response.status_code == 401:
-                    logger.info("尝试注册用户...")
-                    if await self._register():
-                        # 注册成功后重新登录
-                        return await self._login_and_save_token(db, dao)
-                return None
+            
+            # if response.status_code == 200:
+            #     # 从响应头获取token
+            #     token = response.headers.get('authorization')
+            #     if token:
+            #         # 保存token到数据库
+            #         await dao.save_token(self.email, token)
+            #         logger.info(f"用户 {self.email} 登录成功，token已保存")
+            #         return token
+            #     else:
+            #         logger.error("登录成功但未获取到token")
+            #         return None
+            # else:
+            #     logger.error(f"登录失败: {response.status_code} - {response.text}")
+            #     # 如果是401错误，可能需要先注册
+            #     if response.status_code == 401:
+            #         logger.info("尝试注册用户...")
+            #         if await self._register():
+            #             # 注册成功后重新登录
+            #             return await self._login_and_save_token(db, dao)
+            #     return None
                 
         except Exception as e:
             logger.error(f"登录过程中发生错误: {e}")
@@ -184,10 +231,26 @@ class RagflowClient:
         if not need_refresh and response.status_code == 200:
 
             response_json = response.json()
-            code = response_json['code']
-            if code == 401:
-                need_refresh = 'unauthorized' in response_json['message'].lower()
+            code = response_json.get('code')
+            msg = response_json.get('message')
+            if code == RagflowClient.TOKEN_UNAUTHORIZED_CODE:
+                need_refresh = 'unauthorized' in msg.lower()
         return need_refresh
+
+    async def _register_needed(self, response: requests.Response) -> bool:
+        """
+        判断是否需要注册
+        
+        :param response: 响应对象
+        :return: 是否需要注册
+        """
+        if response.status_code == 200:
+            response_json = response.json()
+            code = response_json.get('code')
+            msg = response_json.get('message')
+            return code == RagflowClient.USER_NOT_REGISTERED_CODE and self._email_not_registered(msg.lower())
+
+        return False
 
     async def _make_request(self, method: str, path: str, **kwargs) -> requests.Response:
         """
@@ -220,7 +283,7 @@ class RagflowClient:
                 if await self._refresh_token_needed(response):
                     logger.info("Token可能已过期，尝试重新认证")
                     # 刷新token
-                    token = await self.refresh_token(db)
+                    token = await self._refresh_token(db)
                     if token:
                         headers['authorization'] = token
                         kwargs['headers'] = headers

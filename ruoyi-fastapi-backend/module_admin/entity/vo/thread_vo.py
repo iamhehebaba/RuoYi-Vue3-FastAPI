@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from datetime import datetime
 
 
@@ -30,6 +30,7 @@ class RunCreateModel(BaseModel):
     
     assistant_id: str = Field(..., description="assistant ID")
     input: Dict[str, Any] = Field(..., description="输入数据")
+    stream_mode: Optional[List[str]] = Field(None, description="流模式")
 
 
 class ThreadHistoryModel(BaseModel):

@@ -113,7 +113,9 @@ job_stores = {
         )
     ),
 }
-executors = {'default': AsyncIOExecutor(), 'processpool': ProcessPoolExecutor(5)}
+# 临时禁用ProcessPoolExecutor以避免multiprocessing问题
+# executors = {'default': AsyncIOExecutor(), 'processpool': ProcessPoolExecutor(5)}
+executors = {'default': AsyncIOExecutor(), 'processpool': AsyncIOExecutor()}
 job_defaults = {'coalesce': False, 'max_instance': 1}
 scheduler = AsyncIOScheduler()
 scheduler.configure(jobstores=job_stores, executors=executors, job_defaults=job_defaults)

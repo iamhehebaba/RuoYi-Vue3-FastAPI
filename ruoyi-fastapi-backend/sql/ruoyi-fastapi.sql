@@ -804,3 +804,12 @@ create table ragflow_token (
   create_time        datetime                                  comment '创建时间',
   primary key (email),
 ) engine=innodb comment = 'ragflow token表';
+
+drop table if exists ragflow_kb;
+create table ragflow_kb (
+  id                varchar(100)    not null                   comment 'id',
+  dept_id           bigint(20)      default null               comment '部门ID',
+  created_by        varchar(64)     default 'admin'            comment '创建者',
+  created_at        datetime                                   comment '创建时间',
+  primary key (id)
+) engine=innodb comment = 'ragflow kb表';

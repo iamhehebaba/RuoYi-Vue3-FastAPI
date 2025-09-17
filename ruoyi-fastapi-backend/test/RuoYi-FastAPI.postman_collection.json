@@ -142,7 +142,7 @@
 			]
 		},
 		{
-			"name": "agent",
+			"name": "Agent",
 			"item": [
 				{
 					"name": "search assistants proxy",
@@ -851,6 +851,132 @@
 									"key": "pageSize",
 									"value": "10"
 								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get dept tree",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('HTTP 200', () => pm.response.code === 200);",
+									"const j=pm.response.json()||{}; pm.test('biz code 200', ()=> j.code===200 && j.success===true);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/system/user/deptTree",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"system",
+								"user",
+								"deptTree"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get one user detail",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('HTTP 200', () => pm.response.code === 200);",
+									"const j=pm.response.json()||{}; pm.test('biz code 200', ()=> j.code===200 && j.success===true);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/system/user/2",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"system",
+								"user",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get current user detail",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('HTTP 200', () => pm.response.code === 200);",
+									"const j=pm.response.json()||{}; pm.test('biz code 200', ()=> j.code===200 && j.success===true);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/system/user/2",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"system",
+								"user",
+								"2"
 							]
 						}
 					},
@@ -4714,6 +4840,380 @@
 					]
 				}
 			]
+		},
+		{
+			"name": "Ragflow",
+			"item": [
+				{
+					"name": "model",
+					"item": [
+						{
+							"name": "get LLM factories list",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/ragflow/v1/llm/factories",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"ragflow",
+										"v1",
+										"llm",
+										"factories"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "get my LLMs",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/ragflow/v1/llm/my_llms",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"ragflow",
+										"v1",
+										"llm",
+										"my_llms"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "delete one LLM",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"llm_factory\": \"Tongyi-Qianwen\",\n    \"llm_name\": \"deepseek-r1-distill-llama-8b\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/ragflow/v1/llm/delete_llm",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"ragflow",
+										"v1",
+										"llm",
+										"delete_llm"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "set api key",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"llm_factory\": \"DeepSeek\",\n    \"api_key\": \"sk-826e7e7424d84b9f81ca565ed87de556\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/ragflow/v1/llm/set_api_key",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"ragflow",
+										"v1",
+										"llm",
+										"set_api_key"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "set default model",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"tenant_id\": \"b8da54dc8ef111f0ab953add0da64685\",\n    \"name\": \"service‘s Kingdom\",\n    \"llm_id\": \"deepseek-v3@Tongyi-Qianwen\",\n    \"embd_id\": \"text-embedding-v3@Tongyi-Qianwen\",\n    \"img2txt_id\": \"qwen-vl-plus@Tongyi-Qianwen\",\n    \"asr_id\": \"\",\n    \"rerank_id\": \"gte-rerank@Tongyi-Qianwen\",\n    \"tts_id\": \"sambert-zhide-v1@Tongyi-Qianwen\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/ragflow/v1/llm/set_default_model",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"ragflow",
+										"v1",
+										"llm",
+										"set_default_model"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "model proxy mode",
+					"item": [
+						{
+							"name": "get LLM factories list",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/proxy/ragflow/v1/llm/factories",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"proxy",
+										"ragflow",
+										"v1",
+										"llm",
+										"factories"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "get my LLMs",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/proxy/ragflow/v1/llm/my_llms",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"proxy",
+										"ragflow",
+										"v1",
+										"llm",
+										"my_llms"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "delete one LLM",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"llm_factory\": \"Tongyi-Qianwen\",\n    \"llm_name\": \"deepseek-r1-distill-llama-8b\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/proxy/ragflow/v1/llm/delete_llm",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"proxy",
+										"ragflow",
+										"v1",
+										"llm",
+										"delete_llm"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "set api key",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"llm_factory\": \"DeepSeek\",\n    \"api_key\": \"sk-826e7e7424d84b9f81ca565ed87de556\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/proxy/ragflow/v1/llm/set_api_key",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"proxy",
+										"ragflow",
+										"v1",
+										"llm",
+										"set_api_key"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "set default model",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"tenant_id\": \"b8da54dc8ef111f0ab953add0da64685\",\n    \"name\": \"service‘s Kingdom\",\n    \"llm_id\": \"deepseek-v3@Tongyi-Qianwen\",\n    \"embd_id\": \"text-embedding-v3@Tongyi-Qianwen\",\n    \"img2txt_id\": \"qwen-vl-plus@Tongyi-Qianwen\",\n    \"asr_id\": \"\",\n    \"rerank_id\": \"gte-rerank@Tongyi-Qianwen\",\n    \"tts_id\": \"sambert-zhide-v1@Tongyi-Qianwen\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/proxy/ragflow/v1/llm/set_default_model",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"proxy",
+										"ragflow",
+										"v1",
+										"llm",
+										"set_default_model"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
 		}
 	],
 	"event": [
@@ -4765,12 +5265,7 @@
 		},
 		{
 			"key": "proxy-to-langgraph",
-			"value": "http://localhost:9099/proxy/langgraph",
-			"type": "string",
-			"description": {
-				"content": "",
-				"type": "text/plain"
-			}
+			"value": "http://localhost:9099/proxy/langgraph"
 		}
 	]
 }

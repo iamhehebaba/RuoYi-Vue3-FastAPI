@@ -253,7 +253,8 @@ class LoginService:
                     roleIds=role_ids,
                     dept=CamelCaseUtil.transform_result(query_user.get('user_dept_info')),
                     role=CamelCaseUtil.transform_result(query_user.get('user_role_info')),
-                    agentIds=graph_ids
+                    agentIds=graph_ids,
+                    agents=CamelCaseUtil.transform_result(query_user.get('user_agent_info')),
                 ),
             )
             return current_user

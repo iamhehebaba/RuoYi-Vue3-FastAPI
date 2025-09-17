@@ -1,6 +1,6 @@
 import os
 import httpx
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, AsyncGenerator
 from loguru import logger
 
 
@@ -36,6 +36,52 @@ class LanggraphApiClient:
         """
         url = f"{self.base_url}{endpoint}"
         return await self._make_request("POST", url, json=json_data, **kwargs)
+    
+    async def post_stream(self, endpoint: str, json_data: Optional[Dict] = None, **kwargs) -> AsyncGenerator[str, None]:
+        """
+        发送POST流式请求
+        
+        :param endpoint: API端点路径
+        :param json_data: 请求体JSON数据
+        :param kwargs: 其他请求参数
+        :return: 异步生成器，逐行yield流式响应数据
+        """
+        url = f"{self.base_url}{endpoint}"
+        
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                # 合并默认headers和传入的headers
+                request_headers = {**self.headers}
+                if 'headers' in kwargs:
+                    request_headers.update(kwargs.pop('headers'))
+                
+                # 设置流式请求的Accept头
+                request_headers["Accept"] = "text/event-stream"
+                
+                async with client.stream(
+                    method="POST",
+                    url=url,
+                    headers=request_headers,
+                    json=json_data,
+                    **kwargs
+                ) as response:
+                    if response.status_code != 200:
+                        logger.error(f"调用langgraph_api流式请求失败: {response.status_code} - {await response.aread()}")
+                        raise Exception(f"调用langgraph_api流式请求失败: {response.status_code}")
+                    
+                    async for chunk in response.aiter_text():
+                        if chunk.strip():  # 过滤空行
+                            yield chunk
+                            
+        except httpx.TimeoutException as e:
+            logger.error("调用langgraph_api流式请求超时")
+            raise e
+        except httpx.RequestError as e:
+            logger.error(f"调用langgraph_api流式请求错误: {e}")
+            raise e
+        except Exception as e:
+            logger.error(f"调用langgraph_api流式请求失败: {e}")
+            raise e
     
     async def _make_request(self, method: str, url: str, **kwargs) -> Dict[str, Any]:
         """

@@ -9,6 +9,7 @@ from module_admin.annotation.pydantic_annotation import as_query
 from module_admin.entity.vo.dept_vo import DeptModel
 from module_admin.entity.vo.post_vo import PostModel
 from module_admin.entity.vo.role_vo import RoleModel
+from module_admin.entity.vo.agent_vo import AgentModel
 
 
 class TokenData(BaseModel):
@@ -118,6 +119,7 @@ class UserInfoModel(UserModel):
     dept: Optional[Union[DeptModel, None]] = Field(default=None, description='部门信息')
     role: Optional[List[Union[RoleModel, None]]] = Field(default=[], description='角色信息')
     agent_ids: Optional[List[str]] = Field(default = [], description='智能体ID信息')
+    agents: Optional[List[Union[AgentModel, None]]] = Field(default=[], description='智能体信息')
 
 
 class CurrentUserModel(BaseModel):
