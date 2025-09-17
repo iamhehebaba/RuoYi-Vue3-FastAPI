@@ -36,6 +36,7 @@ class RagflowModelRule(Dict[str, Any]):
     permission: Optional[Union[str, List[str]]]  # 需要的权限标识（字符串或列表）
     perm_strict: Optional[bool]  # 权限为列表时是否要求全部满足
     upstream_path: Optional[str]  # 如果有值，则使用此路径替换path_prefix的值
+    description: Optional[str]
 
 
 # 根据 model_controller.py 中的API配置转发规则
@@ -45,37 +46,70 @@ RULES: List[RagflowModelRule] = [
         "method": "GET",
         "permission": "model:model:add",
         "perm_strict": False,
+        "description": "list all LLM providers"
     },
     {
         "path_prefix": "/v1/llm/my_llms",
         "method": "GET",
         "permission": ["model:model:add", "model:model:list", "model:model:remove", "model:model:config"],
         "perm_strict": False,  # 非严格模式，满足任一权限即可
+        "description": "list my currently added LLMs"
     },
     {
         "path_prefix": "/v1/llm/delete_llm",
         "method": "POST",
         "permission": "model:model:remove",
         "perm_strict": False,
+        "description": "delete one LLM from my currently added LLMs"
     },
     {
         "path_prefix": "/v1/llm/set_api_key",
         "method": "POST",
         "permission": "model:model:add",
         "perm_strict": False,
-    },
-    {
-        "path_prefix": "/v1/llm/set_default_model",
-        "method": "POST",
-        "permission": "model:model:config",
-        "perm_strict": False,
-        "upstream_path": "/v1/user/set_tenant_info"
+        "description": "set the API key to add new LLM"
     },
     {
         "path_prefix": "/v1/llm/list",
         "method": "GET",
+        "description": "list all LLMs for setting default LLMs"
     },    
-]
+
+    # kb apis
+    {
+        "path_prefix": "/v1/kb/list",   # anyone can list his own kb
+        "method": "POST",
+        "descriptioni": "list all kbs for current user based on his role assignments"
+    },    
+    {
+        "path_prefix": "/v1/kb/create",
+        "method": "POST",
+        "permission": "kb:kb:add",      # must have the "add kb" permission
+        "description": "create a new kb"
+    },
+
+    # tenant apis
+    {
+        "path_prefix": "/v1/tenant/list",   # anyone can list his tenants(one user may belong to multiple tenants)
+        "method": "GET",
+        "description": "list all tenants for current user"
+    },
+
+    # user apis
+    {
+        "path_prefix": "/v1/user/set_tenant_info",
+        "method": "POST",
+        "permission": "model:model:config",
+        "description": "set the default LLMs for current tenant"
+    },    
+    {
+        "path_prefix": "/v1/user/tenant_info",
+        "method": "GET",
+        "permission": ["model:model:add", "model:model:list", "model:model:remove", "model:model:config"],
+        "description": "list all default LLMs for current tenant"
+    },    
+]    
+
 
 
 def _match_rule(sub_path: str, method: str) -> Optional[RagflowModelRule]:
