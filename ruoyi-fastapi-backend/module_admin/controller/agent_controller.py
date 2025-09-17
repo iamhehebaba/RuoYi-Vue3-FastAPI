@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from config.get_db import get_db
 from module_admin.aspect.interface_auth import CheckUserInterfaceAuth, CheckOwnershipInterfaceAuth
@@ -13,7 +14,6 @@ from module_admin.aspect.data_scope import GetDataScope
 
 from utils.response_util import ResponseUtil
 from utils.log_util import logger
-from fastapi import HTTPException
 
 agentController = APIRouter(prefix='/langgraph', tags=['智能体管理'])
 
@@ -82,6 +82,35 @@ async def create_run(
     logger.info(f"用户 {current_user.user.get_user_name()} 成功创建了一个run: {run_result.get('runId')}")
     
     return ResponseUtil.success(data=run_result, msg="Run创建成功")
+
+@agentController.post('/threads/{thread_id}/runs/stream', dependencies=[Depends(CheckOwnershipInterfaceAuth('thread_id', 'LanggraphThread'))])
+async def create_run_in_stream(
+    request: Request,
+    thread_id: str,
+    run_request: RunCreateModel,
+    current_user: CurrentUserModel = Depends(LoginService.get_current_user)
+):
+    """
+    流式运行thread
+    """
+    logger.info(f"用户 {current_user.user.get_user_name()} 开始流式运行thread: {thread_id}")
+    
+    # 流式运行thread
+    stream_generator = ThreadService.create_run_in_stream_service(
+        thread_id, 
+        run_request
+    )
+    
+    return StreamingResponse(
+        stream_generator,
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "*"
+        }
+    )
 
 @agentController.get('/threads/{thread_id}/runs/{run_id}', dependencies=[Depends(CheckOwnershipInterfaceAuth('thread_id', 'LanggraphThread'))])
 async def get_run_status(

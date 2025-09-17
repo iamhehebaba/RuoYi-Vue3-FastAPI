@@ -1,13 +1,13 @@
-from datetime import datetime
+from typing import Dict, Any, Optional, AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Dict, Any, Optional
+from datetime import datetime
 from module_admin.dao.thread_dao import ThreadDao
 from module_admin.entity.do.langgraphthread_do import LanggraphThread
-from module_admin.entity.vo.thread_vo import ThreadCreateModel, ThreadCreateResponseModel, RunCreateModel, ThreadHistoryModel, ThreadSearchModel
-from module_admin.entity.vo.common_vo import CrudResponseModel
-from utils.common_util import CamelCaseUtil, SnakeCaseUtil
+from module_admin.entity.vo.thread_vo import ThreadCreateModel, RunCreateModel, ThreadHistoryModel, ThreadSearchModel
 from utils.langgraph_util import LanggraphApiClient
-from loguru import logger
+from utils.common_util import CamelCaseUtil
+from utils.log_util import logger
+import httpx
 
 
 class ThreadService:
@@ -132,6 +132,28 @@ class ThreadService:
             raise e
         except Exception as e:
             logger.error(f"运行thread失败: {e}")
+            raise e
+
+    @classmethod
+    async def create_run_in_stream_service(cls, thread_id: str, request: RunCreateModel) -> AsyncGenerator[str, None]:
+        """
+        流式运行thread
+
+        :param thread_id: thread ID
+        :param request: 运行thread请求
+        :return: 流式响应生成器
+        """
+        try:
+            # 调用langgraph_api服务的流式接口
+            api_client = LanggraphApiClient()
+            async for chunk in api_client.post_stream(f"/threads/{thread_id}/runs/stream", request.model_dump()):
+                yield chunk
+                
+        except (httpx.TimeoutException, httpx.RequestError) as e:
+            logger.error(f"流式运行thread失败: {e}")
+            raise e
+        except Exception as e:
+            logger.error(f"流式运行thread失败: {e}")
             raise e
 
     @classmethod
