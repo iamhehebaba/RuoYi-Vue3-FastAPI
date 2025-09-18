@@ -1166,6 +1166,7 @@ drop table if exists ragflow_kb;
 create table ragflow_kb (
   id                varchar(100)    not null,
   dept_id           bigint(20)      default null,
+  user_id           bigint(20)      not null,
   created_by        varchar(64)     default 'admin',
   created_at        timestamp(0),
   primary key (id)
@@ -1173,5 +1174,6 @@ create table ragflow_kb (
 
 comment on ragflow_kb.id is 'id';
 comment on ragflow_kb.dept_id is '部门ID';
-comment on ragflow_kb.created_by is '创建者';
+comment on ragflow_kb.user_id is '创建者user_id';
+comment on ragflow_kb.created_by is '创建者user_name';
 comment on ragflow_kb.created_at is '创建时间';
