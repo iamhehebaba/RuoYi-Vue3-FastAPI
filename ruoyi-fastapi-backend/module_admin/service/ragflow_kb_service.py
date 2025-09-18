@@ -154,7 +154,7 @@ class RagflowKbService:
         payload: Any) -> Any:
 
         """
-        过滤知识库列表根据权限service层
+        根据权限service层过滤知识库列表
 
         :param full_path: 知识库路径
         :param request: 请求对象
@@ -164,4 +164,43 @@ class RagflowKbService:
         :param payload: 知识库列表
         :return: 过滤后的知识库列表
         """
+        kb_list = await cls.get_ragflow_kb_list_service(query_db, data_scope_sql)
+        kb_id_list = [kb.id for kb in kb_list]
+        
+        # 检查payload是否为空或结构不完整
+        if not payload or not isinstance(payload, dict):
+            logger.warning("payload为空或格式不正确")
+            return payload
+            
+        if "data" not in payload or not isinstance(payload["data"], dict):
+            logger.warning("payload.data不存在或格式不正确")
+            return payload
+            
+        if "kbs" not in payload["data"] or not isinstance(payload["data"]["kbs"], list):
+            logger.warning("payload.data.kbs不存在或格式不正确")
+            return payload
+        
+        # 过滤kbs列表
+        original_kbs = payload["data"]["kbs"]
+        filtered_kbs = []
+        
+        for kb in original_kbs:
+            if isinstance(kb, dict) and "id" in kb:
+                kb_id = kb["id"]
+                if kb_id in kb_id_list:
+                    # 保留有权限的知识库
+                    filtered_kbs.append(kb)
+                else:
+                    # 移除无权限的知识库并记录日志
+                    logger.info(f"用户 {current_user.user.user_name} 无权限访问知识库: id={kb_id}，已从列表中移除")
+            else:
+                # kb结构不正确，记录日志但不添加到结果中
+                logger.warning(f"知识库数据结构不正确: {kb}")
+        
+        # 更新payload
+        payload["data"]["kbs"] = filtered_kbs
+        payload["data"]["total"] = len(filtered_kbs)
+        
+        logger.info(f"知识库权限过滤完成，原始数量: {len(original_kbs)}, 过滤后数量: {len(filtered_kbs)}")
+        
         return payload
