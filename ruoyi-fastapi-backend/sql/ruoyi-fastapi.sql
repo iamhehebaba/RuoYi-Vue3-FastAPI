@@ -809,7 +809,8 @@ drop table if exists ragflow_kb;
 create table ragflow_kb (
   id                varchar(100)    not null                   comment 'id',
   dept_id           bigint(20)      default null               comment '部门ID',
-  created_by        varchar(64)     default 'admin'            comment '创建者',
+  user_id           bigint(20)      not null                   comment '创建者user_id'
+  created_by        varchar(64)     default 'admin'            comment '创建者user_name',
   created_at        datetime                                   comment '创建时间',
   primary key (id)
 ) engine=innodb comment = 'ragflow kb表';
