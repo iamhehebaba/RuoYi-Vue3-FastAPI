@@ -30,7 +30,7 @@ from config.env import RagflowConfig
 """
 
 
-ragflowModelController = APIRouter(prefix="/proxy/ragflow", tags=["Ragflow模型管理"])
+ragflowController = APIRouter(prefix="/ragflow", tags=["Ragflow模型管理"])
 
 
 class RagflowModelRule(Dict[str, Any]):
@@ -171,7 +171,7 @@ async def _require_permission_for_path(
     return True
 
 
-@ragflowModelController.api_route(
+@ragflowController.api_route(
     "/{full_path:path}",
     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     dependencies=[Depends(_require_permission_for_path)],

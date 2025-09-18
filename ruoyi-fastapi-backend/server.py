@@ -24,7 +24,7 @@ from module_admin.controller.server_controller import serverController
 from module_admin.controller.user_controller import userController
 from module_generator.controller.gen_controller import genController
 from module_admin.controller.agent_controller import agentController
-from module_admin.controller.ragflow_model_controller import ragflowModelController
+from module_admin.controller.ragflow_controller import ragflowController
 
 from sub_applications.handle import handle_sub_applications
 from utils.common_util import worship
@@ -84,7 +84,7 @@ controller_list = [
     {'router': commonController, 'tags': ['通用模块']},
     {'router': genController, 'tags': ['代码生成']},
     {'router': agentController, 'tags': ['智能体管理']},
-    {'router': ragflowModelController, 'tags': ['Ragflow模型管理']},
+    {'router': ragflowController, 'tags': ['Ragflow模型管理']},
 ]
 
 for controller in controller_list:

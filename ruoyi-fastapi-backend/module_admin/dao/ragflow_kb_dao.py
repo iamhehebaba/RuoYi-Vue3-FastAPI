@@ -1,4 +1,4 @@
-from sqlalchemy import delete, select
+from sqlalchemy import bindparam, func, or_, select, update, delete  # noqa: F401
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List
 from module_admin.entity.do.ragflow_kb_do import RagflowKb
