@@ -1,12 +1,16 @@
 from __future__ import annotations
+from typing import Any, Dict, List, Optional, Union, Callable, Awaitable
 
-from typing import Any, Dict, List, Optional, Union
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import JSONResponse
+from module_admin.aspect.data_scope import GetDataScope
 
+from config.get_db import get_db
 from module_admin.aspect.interface_auth import CheckUserInterfaceAuth
 from module_admin.service.login_service import LoginService
+from module_admin.service.ragflow_kb_service import RagflowKbService
 from module_admin.entity.vo.user_vo import CurrentUserModel
 from utils.ragflow_util import ragflow_client
 from utils.log_util import logger
@@ -26,7 +30,7 @@ from config.env import RagflowConfig
 """
 
 
-ragflowModelController = APIRouter(prefix="/proxy/ragflow", tags=["Ragflow模型管理"])
+ragflowController = APIRouter(prefix="/ragflow", tags=["Ragflow模型管理"])
 
 
 class RagflowModelRule(Dict[str, Any]):
@@ -37,6 +41,8 @@ class RagflowModelRule(Dict[str, Any]):
     perm_strict: Optional[bool]  # 权限为列表时是否要求全部满足
     upstream_path: Optional[str]  # 如果有值，则使用此路径替换path_prefix的值
     description: Optional[str]
+    pre_processor: Optional[Callable[[str, Request, AsyncSession, CurrentUserModel, str, Any], Awaitable[Any]]]  # 前处理函数
+    post_processor: Optional[Callable[[str, Request, AsyncSession, CurrentUserModel, str, Any], Awaitable[Any]]]  # 后处理函数
 
 
 # 根据 model_controller.py 中的API配置转发规则
@@ -79,7 +85,8 @@ RULES: List[RagflowModelRule] = [
     {
         "path_prefix": "/v1/kb/list",   # anyone can list his own kb
         "method": "POST",
-        "descriptioni": "list all kbs for current user based on his role assignments"
+        "descriptioni": "list all kbs for current user based on his role assignments",
+        "post_processor": RagflowKbService.filter_ragflow_kb_by_permission
     },    
     {
         "path_prefix": "/v1/kb/create",
@@ -87,6 +94,16 @@ RULES: List[RagflowModelRule] = [
         "permission": "kb:kb:add",      # must have the "add kb" permission
         "description": "create a new kb"
     },
+    {
+        "path_prefix": "/v1/kb/update",
+        "method": "POST",
+        "permission": ["kb:kb:edit", "kb:kb:add"],      # must have the "edit kb" or "add kb" permission
+        "perm_strict": False,
+        "description": "update a kb configuration",
+        "pre_processor": RagflowKbService.check_ragflow_kb_permission,
+    },
+
+    
 
     # tenant apis
     {
@@ -165,12 +182,18 @@ async def _require_permission_for_path(
     return True
 
 
-@ragflowModelController.api_route(
+@ragflowController.api_route(
     "/{full_path:path}",
     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     dependencies=[Depends(_require_permission_for_path)],
 )
-async def ragflow_model_proxy_all(full_path: str, request: Request) -> Response:
+async def ragflow_model_proxy_all(
+    full_path: str, 
+    request: Request,     
+    query_db: AsyncSession = Depends(get_db),
+    current_user: CurrentUserModel = Depends(LoginService.get_current_user),    
+    data_scope_sql: str = Depends(GetDataScope('RagflowKb')),
+) -> Response:
     """
     统一Ragflow模型API代理入口：匹配 RULES 并转发请求。
     """
@@ -180,54 +203,65 @@ async def ragflow_model_proxy_all(full_path: str, request: Request) -> Response:
     # 这里理论上一定能匹配，因为 _require_permission_for_path 已经做过一次匹配与校验
     assert rule is not None
 
-    try:
-        # 确定实际转发的路径
-        actual_path = sub_path
-        if rule.get("upstream_path"):
-            actual_path = rule["upstream_path"]
-        
-        # 提取请求信息
-        body = await request.body()
-        query_params = dict(request.query_params)
-        
-        # 准备请求参数
-        kwargs = {}
-        if query_params:
-            kwargs['params'] = query_params
-        if body:
-            try:
-                import json
-                kwargs['json'] = json.loads(body.decode('utf-8'))
-            except (json.JSONDecodeError, UnicodeDecodeError):
-                kwargs['data'] = body
-        
-        # 使用 RagflowClient 转发请求
-        if method.upper() == 'GET':
-            response_data = await ragflow_client.get(actual_path, **kwargs)
-        elif method.upper() == 'POST':
-            response_data = await ragflow_client.post(actual_path, **kwargs)
-        elif method.upper() == 'PUT':
-            response_data = await ragflow_client.put(actual_path, **kwargs)
-        elif method.upper() == 'DELETE':
-            response_data = await ragflow_client.delete(actual_path, **kwargs)
-        else:
-            # 其他方法暂不支持
-            return JSONResponse(
-                status_code=405,
-                content={"code": 405, "message": f"Method {method} not allowed"}
-            )
-        
-        logger.info(f"Ragflow API {method} {actual_path} 调用成功")
-        
-        # 返回响应
-        return JSONResponse(
-            status_code=200,
-            content=response_data
+    # try:
+    # 确定实际转发的路径
+    actual_path = sub_path
+    if rule.get("upstream_path"):
+        actual_path = rule["upstream_path"]
+    
+    # 提取请求信息
+    body = await request.body()
+    query_params = dict(request.query_params)
+    
+    # 准备请求参数
+    kwargs = {}
+    if query_params:
+        kwargs['params'] = query_params
+    if body:
+        try:
+            import json
+            kwargs['json'] = json.loads(body.decode('utf-8'))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            kwargs['data'] = body
+    
+    if rule.get("pre_processor"):
+        await rule["pre_processor"](
+            full_path, request, query_db, current_user, data_scope_sql, kwargs['json']
         )
-        
-    except Exception as e:
-        logger.error(f"Ragflow API {method} {actual_path} 调用失败: {str(e)}")
+
+    # 使用 RagflowClient 转发请求
+    if method.upper() == 'GET':
+        response_data = await ragflow_client.get(actual_path, **kwargs)
+    elif method.upper() == 'POST':
+        response_data = await ragflow_client.post(actual_path, **kwargs)
+    elif method.upper() == 'PUT':
+        response_data = await ragflow_client.put(actual_path, **kwargs)
+    elif method.upper() == 'DELETE':
+        response_data = await ragflow_client.delete(actual_path, **kwargs)
+    else:
+        # 其他方法暂不支持
         return JSONResponse(
-            status_code=500,
-            content={"code": 500, "message": f"Ragflow API调用失败: {str(e)}"}
+            status_code=405,
+            content={"code": 405, "message": f"Method {method} not allowed"}
         )
+    
+    logger.info(f"Ragflow API {method} {actual_path} 调用成功")
+    
+    # 如果配置了后处理函数，则调用进行后处理
+    if rule.get("post_processor"):
+        response_data = await rule["post_processor"](
+            full_path, request, query_db, current_user, data_scope_sql, response_data
+        )
+    
+    # 返回响应
+    return JSONResponse(
+        status_code=200,
+        content=response_data
+    )
+        
+    # except Exception as e:
+    #     logger.error(f"Ragflow API {method} {actual_path} 调用失败: {str(e)}")
+    #     return JSONResponse(
+    #         status_code=500,
+    #         content={"code": 500, "message": f"Ragflow API调用失败: {str(e)}"}
+    #     )

@@ -12,7 +12,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.backends import default_backend
 
 from config.env import RagflowConfig
-from module_admin.dao.ragflow_dao import RagflowDao
+from module_admin.dao.ragflow_token_dao import RagflowTokenDao
 from config.get_db import get_db
 
 # 配置日志
@@ -96,7 +96,7 @@ class RagflowClient:
         """获取有效的token，如果不存在或过期则重新登录"""
         try:
             async for db in get_db():
-                dao = RagflowDao(db)
+                dao = RagflowTokenDao(db)
                 
                 # 检查是否存在有效token
                 token_info = await dao.get_token_by_email(self.email)
@@ -148,7 +148,7 @@ class RagflowClient:
         """
         try:
             # 删除过期的token
-            dao = RagflowDao(db)
+            dao = RagflowTokenDao(db)
             await dao.delete_token_by_email(self.email)
             
             # 重新认证
@@ -157,7 +157,7 @@ class RagflowClient:
             logger.error(f"刷新token失败: {e}")
             return None
 
-    async def _login_and_save_token(self, db: AsyncSession, dao: RagflowDao) -> Optional[str]:
+    async def _login_and_save_token(self, db: AsyncSession, dao: RagflowTokenDao) -> Optional[str]:
         """登录并保存token"""
         try:
             # 加密密码

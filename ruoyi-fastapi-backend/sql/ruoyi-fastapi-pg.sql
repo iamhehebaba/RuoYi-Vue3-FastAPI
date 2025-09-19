@@ -278,9 +278,9 @@ insert into sys_menu values('506',  '知识库添加', '119', '1', 'kb/add',    
 insert into sys_menu values('507',  '知识库修改', '119', '2', 'kb/edit',   'system/kb/edit',      '', '', 1, 0, 'C', '0', '0', 'kb:kb:edit',      'edit',         'admin', current_timestamp, '', null, '知识库修改菜单'); 
 insert into sys_menu values('508',  '知识库删除', '119', '3', 'kb/delete', 'system/kb/delete',    '', '', 1, 0, 'C', '0', '0', 'kb:kb:remove',    'delete',       'admin', current_timestamp, '', null, '知识库删除菜单');
 insert into sys_menu values('509',  '知识库列表', '119', '4', 'kb/list',   'system/kb/list',      '', '', 1, 0, 'C', '0', '0', 'kb:kb:list',      'list',         'admin', current_timestamp, '', null, '知识库列表菜单');
-insert into sys_menu values('510',  '文档添加', '119', '5', 'kb/addDocument',     'system/kb/addDocument',        '', '', 1, 0, 'C', '0', '0', 'kb:docs:add',        'add',       'admin', current_timestamp, '', null, '文档添加菜单');
-insert into sys_menu values('511',  '文档删除', '119', '6', 'kb/deleteDocument',  'system/kb/deleteDocument',     '', '', 1, 0, 'C', '0', '0', 'kb:docs:delete',     'delete',       'admin', current_timestamp, '', null, '文档删除菜单');
-insert into sys_menu values('512',  '文档列表', '119', '7', 'kb/listDocument',    'system/kb/listDocument',       '', '', 1, 0, 'C', '0', '0', 'kb:docs:list',       'list',         'admin', current_timestamp, '', null, '文档列表菜单');
+insert into sys_menu values('510',  '文档添加', '119', '5', 'kb/addDocument',     'system/kb/addDocument',        '', '', 1, 0, 'C', '0', '0', 'kb:doc:add',        'add',       'admin', current_timestamp, '', null, '文档添加菜单');
+insert into sys_menu values('511',  '文档删除', '119', '6', 'kb/deleteDocument',  'system/kb/deleteDocument',     '', '', 1, 0, 'C', '0', '0', 'kb:doc:delete',     'delete',       'admin', current_timestamp, '', null, '文档删除菜单');
+insert into sys_menu values('512',  '文档列表', '119', '7', 'kb/listDocument',    'system/kb/listDocument',       '', '', 1, 0, 'C', '0', '0', 'kb:doc:list',       'list',         'admin', current_timestamp, '', null, '文档列表菜单');
 
 -- 用户管理按钮
 insert into sys_menu values(1000, '用户查询', 100, '1',  '', '', '', '', 1, 0, 'F', '0', '0', 'system:user:query',          '#', 'admin', current_timestamp, '', null, '');
@@ -1166,6 +1166,7 @@ drop table if exists ragflow_kb;
 create table ragflow_kb (
   id                varchar(100)    not null,
   dept_id           bigint(20)      default null,
+  user_id           bigint(20)      not null,
   created_by        varchar(64)     default 'admin',
   created_at        timestamp(0),
   primary key (id)
@@ -1173,5 +1174,6 @@ create table ragflow_kb (
 
 comment on ragflow_kb.id is 'id';
 comment on ragflow_kb.dept_id is '部门ID';
-comment on ragflow_kb.created_by is '创建者';
+comment on ragflow_kb.user_id is '创建者user_id';
+comment on ragflow_kb.created_by is '创建者user_name';
 comment on ragflow_kb.created_at is '创建时间';
