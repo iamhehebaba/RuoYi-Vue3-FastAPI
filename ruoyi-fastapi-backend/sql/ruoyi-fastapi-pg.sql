@@ -1162,6 +1162,10 @@ comment on ragflow_token.token is '认证token';
 comment on ragflow_token.token_refresh_time is 'token刷新时间';
 comment on ragflow_token.create_time is '创建时间';
 
+
+-- ----------------------------
+-- 24、ragflow kb表
+-- ----------------------------
 drop table if exists ragflow_kb;
 create table ragflow_kb (
   id                varchar(100)    not null,
