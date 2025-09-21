@@ -30,7 +30,8 @@ class RunCreateModel(BaseModel):
     
     assistant_id: str = Field(..., description="assistant ID")
     input: Dict[str, Any] = Field(..., description="输入数据")
-    stream_mode: Optional[List[str]] = Field(None, description="流模式")
+    config: Dict[str, Any] = Field({}, description="配置参数")
+    stream_mode: Optional[List[str]] = Field(["messages"], description="流模式")
 
 
 class ThreadHistoryModel(BaseModel):
