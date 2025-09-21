@@ -48,6 +48,7 @@ class DataBaseSettings(BaseSettings):
     db_username: str = 'root'
     db_password: str = 'mysqlroot'
     db_database: str = 'ruoyi-fastapi'
+    db_ragflow: str = 'ragflow'
     db_echo: bool = True
     db_max_overflow: int = 10
     db_pool_size: int = 50

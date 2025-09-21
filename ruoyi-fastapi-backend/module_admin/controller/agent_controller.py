@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from config.get_db import get_db
+from config.get_db import get_db, get_db_ragflow
 from module_admin.aspect.interface_auth import CheckUserInterfaceAuth, CheckOwnershipInterfaceAuth
 from module_admin.entity.vo.agent_vo import AgentQueryModel
 from module_admin.entity.vo.thread_vo import ThreadCreateModel, RunCreateModel, ThreadHistoryModel, ThreadSearchModel
@@ -11,6 +11,8 @@ from module_admin.service.thread_service import ThreadService
 from module_admin.service.login_service import LoginService
 from module_admin.aspect.agent_scope import GetAgentScope
 from module_admin.aspect.data_scope import GetDataScope
+
+from module_admin.service.ragflow_tenant_llm_service import RagflowTenantLLMService
 
 from utils.response_util import ResponseUtil
 from utils.log_util import logger
@@ -25,13 +27,17 @@ async def search_agents(
     search_condition: AgentQueryModel,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUserModel = Depends(LoginService.get_current_user),
-    agent_scope_sql: str = Depends(GetAgentScope('SysAgent'))
+    agent_scope_sql: str = Depends(GetAgentScope('SysAgent')),
+    db_ragflow: AsyncSession = Depends(get_db_ragflow)
+
 ):
     """
     搜索智能体列表接口
     
     根据用户角色权限返回可访问的智能体列表，支持按graph_id过滤，按name排序，支持limit和offset分页。
     """
+
+    temp = await RagflowTenantLLMService.get_ragflow_tenant_llm_by_key_service(db_ragflow, "DeepSeek", "deepseek-chat")
 
     result = await AgentService.get_agent_list_service(db, search_condition, agent_scope_sql)
     return ResponseUtil.success(data=result)
