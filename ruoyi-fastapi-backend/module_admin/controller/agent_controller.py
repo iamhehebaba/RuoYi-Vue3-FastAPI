@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from config.get_db import get_db, get_db_ragflow
+from exceptions.exception import ModelValidatorException
 from module_admin.aspect.interface_auth import CheckUserInterfaceAuth, CheckOwnershipInterfaceAuth
 from module_admin.entity.vo.agent_vo import AgentQueryModel
 from module_admin.entity.vo.thread_vo import ThreadCreateModel, RunCreateModel, ThreadHistoryModel, ThreadSearchModel
@@ -19,8 +20,10 @@ from utils.log_util import logger
 
 agentController = APIRouter(prefix='/langgraph', tags=['智能体管理'])
 
+REDIS_KEY_CHAT_LLM_API_BASE_URL = "llm_config:chat_llm_api_base_url"
+REDIS_KEY_CHAT_LLM_API_KEY = "llm_config:chat_llm_api_key"
 
-async def _enrich_run_request_with_llm_config(run_request: RunCreateModel, db_ragflow: AsyncSession):
+async def _refresh_llm_config(request: Request, run_request: RunCreateModel, db_ragflow: AsyncSession):
     """
     从run_request.config中提取并添加LLM配置信息
     
@@ -28,39 +31,37 @@ async def _enrich_run_request_with_llm_config(run_request: RunCreateModel, db_ra
         run_request: 运行请求对象
         db_ragflow: 数据库会话
     """
-    try:
-        if run_request.config and 'configurable' in run_request.config:
-            configurable = run_request.config['configurable']
-            
-            # 提取llm_factory和llm_name
-            llm_factory = configurable.get('llm_factory')
-            llm_name = configurable.get('llm_name')
-            
-            if llm_factory and llm_name:
-                try:
-                    # 调用RagflowTenantLLMService查询LLM配置
-                    llm_config = await RagflowTenantLLMService.get_ragflow_tenant_llm_by_key_service(
-                        db_ragflow, llm_factory, llm_name
-                    )
+
+    if run_request.config and 'configurable' in run_request.config:
+        configurable = run_request.config['configurable']
+        
+        # 提取llm_factory和llm_name
+        chat_llm_factory = configurable.get('chat_llm_factory')
+        chat_llm_name = configurable.get('chat_llm_name')
+        
+        if chat_llm_factory and chat_llm_name:
+            try:
+                # 调用RagflowTenantLLMService查询LLM配置
+                llm_config = await RagflowTenantLLMService.get_ragflow_tenant_llm_by_key_service(
+                    db_ragflow, chat_llm_factory, chat_llm_name
+                )
+                
+                if llm_config:
+                    # refresh api_base_url & api_key in redis
+                    redis_client = request.app.state.redis
+                    await redis_client.set(REDIS_KEY_CHAT_LLM_API_BASE_URL, llm_config.api_base)
+                    await redis_client.set(REDIS_KEY_CHAT_LLM_API_KEY, llm_config.api_key)          
+                    logger.info(f"成功获取LLM配置: {chat_llm_factory}/{chat_llm_name}")
+                else:
+                    logger.warning(f"未找到LLM配置: {chat_llm_factory}/{chat_llm_name}")
                     
-                    if llm_config:
-                        # 处理字段名，将特殊字符替换为下划线
-                        api_base_key = f"{llm_factory}_{llm_name}_api_base".replace('-', '_').replace(' ', '_')
-                        api_key_key = f"{llm_factory}_{llm_name}_api_key".replace('-', '_').replace(' ', '_')
-                        
-                        # 添加到run_request.config.configurable中
-                        run_request.config['configurable'][api_base_key] = llm_config.api_base
-                        run_request.config['configurable'][api_key_key] = llm_config.api_key
-                        
-                        logger.info(f"成功获取LLM配置: {llm_factory}/{llm_name}")
-                    else:
-                        logger.warning(f"未找到LLM配置: {llm_factory}/{llm_name}")
-                        
-                except Exception as e:
-                    logger.error(f"查询LLM配置失败: {str(e)}")
-                    
-    except Exception as e:
-        logger.error(f"处理run_request.config失败: {str(e)}")
+            except Exception as e:
+                logger.error(f"查询LLM配置失败: {str(e)}")
+                raise ModelValidatorException(message=f"查询LLM配置失败: chat_llm_factory={chat_llm_factory}, chat_llm_name={chat_llm_name}", data=f"{str(e)}")
+        else:
+            raise ModelValidatorException(message=f"请求中缺少了模型信息！")        
+    else:
+        raise ModelValidatorException(message=f"请求中缺少了模型信息！")
 
 
 # 任何具有角色编辑、角色添加权限的人都可以访问该接口以便定义、修改角色的智能体时
@@ -120,8 +121,8 @@ async def create_run(
     运行thread
     """
     
-    # 调用重构后的LLM配置处理函数
-    await _enrich_run_request_with_llm_config(run_request, db_ragflow)
+    # 刷新LLM配置
+    await _refresh_llm_config(request, run_request, db_ragflow)
 
     # 运行thread
     run_result = await ThreadService.create_run_service(
@@ -146,8 +147,8 @@ async def create_run_in_stream(
     """
     logger.info(f"用户 {current_user.user.get_user_name()} 开始流式运行thread: {thread_id}")
     
-    # 调用重构后的LLM配置处理函数
-    await _enrich_run_request_with_llm_config(run_request, db_ragflow)
+    # 刷新LLM配置
+    await _refresh_llm_config(request, run_request, db_ragflow)
     
     # 流式运行thread
     stream_generator = ThreadService.create_run_in_stream_service(
