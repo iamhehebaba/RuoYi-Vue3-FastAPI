@@ -49,9 +49,9 @@ async def _refresh_llm_config(request: Request, run_request: RunCreateModel, db_
                 if llm_config:
                     # refresh api_base_url & api_key in redis
                     redis_client = request.app.state.redis
-                    await redis_client.set(REDIS_KEY_CHAT_LLM_API_BASE_URL, llm_config.api_base)
-                    await redis_client.set(REDIS_KEY_CHAT_LLM_API_KEY, llm_config.api_key)          
-                    logger.info(f"成功获取LLM配置: {chat_llm_factory}/{chat_llm_name}")
+                    await redis_client.set(REDIS_KEY_CHAT_LLM_API_BASE_URL, llm_config.api_base if llm_config.api_base else '')
+                    await redis_client.set(REDIS_KEY_CHAT_LLM_API_KEY, llm_config.api_key if llm_config.api_key else '')          
+                    logger.info(f"成功刷新LLM配置: {chat_llm_factory}/{chat_llm_name}")
                 else:
                     logger.warning(f"未找到LLM配置: {chat_llm_factory}/{chat_llm_name}")
                     
