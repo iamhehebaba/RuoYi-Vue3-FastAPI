@@ -474,7 +474,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"assistantId\": \"{{assistant_id}}\",\r\n    \"input\": {\r\n        \"user_id\": \"galen\",\r\n        \"query\": \"who is current us president?\",\r\n        \"dataset_ids\":[],\r\n        \"web_search_enabled\": true\r\n    }\r\n}",
+							"raw": "{\r\n    \"assistantId\": \"{{assistant_id}}\",\r\n    \"input\": {\r\n        \"user_id\": \"galen\",\r\n        \"query\": \"who is current us president?\",\r\n        \"dataset_ids\":[],\r\n        \"web_search_enabled\": true\r\n    },\r\n    \"stream_mode\": \"None\",\r\n    \"config\": {\r\n        \"configurable\": {\r\n            \"llm_factory\": \"DeepSeek\",\r\n            \"llm_name\": \"deepseek-chat\"\r\n        }\r\n    }    \r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -497,10 +497,34 @@
 					"response": []
 				},
 				{
-					"name": "list runs of thread(raw langgraph)",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
+					"name": "create a run in stream mode",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful POST request\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+									"",
+									"    // 解析响应 body",
+									"    const response = pm.response.json();",
+									"",
+									"    // 提取 run_id",
+									"    const run_id = response.data.runId;",
+									"",
+									"    console.log(run_id)",
+									"",
+									"    // 将 threadId 存储到环境变量",
+									"    pm.environment.set(\"run_id\", run_id);",
+									"",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -512,7 +536,7 @@
 								}
 							]
 						},
-						"method": "GET",
+						"method": "POST",
 						"header": [
 							{
 								"key": "Content-Type",
@@ -522,7 +546,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"select\": [\n        \"thread_id\",\n        \"status\",\n        \"created_at\"\n    ],\n    \"status\": \"idle\",\n    \"limit\": 1,\n    \"offset\": 0,\n    \"sort_by\": \"created_at\"\n}",
+							"raw": "{\r\n    \"assistantId\": \"{{assistant_id}}\",\r\n    \"input\": {\r\n        \"user_id\": \"galen\",\r\n        \"query\": \"who is current us president?\",\r\n        \"web_search_enabled\": true,\r\n        \"dataset_ids\": [\r\n        ]\r\n    },\r\n    \"config\": {\r\n        \"configurable\": {\r\n            \"chat_llm_factory\": \"Tongyi-Qianwen\",\r\n            \"chat_llm_name\": \"deepseek-r1\"\r\n        }\r\n    },    \r\n    \"streamMode\": [\"messages\", \"updates\"]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -530,16 +554,16 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8000/threads/{{thread_id}}/runs",
-							"protocol": "http",
+							"raw": "{{baseUrl}}/langgraph/threads/{{thread_id}}/runs/stream",
 							"host": [
-								"localhost"
+								"{{baseUrl}}"
 							],
-							"port": "8000",
 							"path": [
+								"langgraph",
 								"threads",
 								"{{thread_id}}",
-								"runs"
+								"runs",
+								"stream"
 							]
 						}
 					},
@@ -4845,7 +4869,7 @@
 			"name": "Ragflow",
 			"item": [
 				{
-					"name": "model",
+					"name": "Model Management",
 					"item": [
 						{
 							"name": "get LLM factories list",
@@ -4902,6 +4926,36 @@
 										"v1",
 										"llm",
 										"my_llms"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "llm list",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/ragflow/v1/llm/list",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"ragflow",
+										"v1",
+										"llm",
+										"list"
 									]
 								}
 							},
@@ -4984,9 +5038,14 @@
 								}
 							},
 							"response": []
-						},
+						}
+					]
+				},
+				{
+					"name": "kb",
+					"item": [
 						{
-							"name": "set default model",
+							"name": "list kb",
 							"request": {
 								"auth": {
 									"type": "bearer",
@@ -5002,7 +5061,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"tenant_id\": \"b8da54dc8ef111f0ab953add0da64685\",\n    \"name\": \"service‘s Kingdom\",\n    \"llm_id\": \"deepseek-v3@Tongyi-Qianwen\",\n    \"embd_id\": \"text-embedding-v3@Tongyi-Qianwen\",\n    \"img2txt_id\": \"qwen-vl-plus@Tongyi-Qianwen\",\n    \"asr_id\": \"\",\n    \"rerank_id\": \"gte-rerank@Tongyi-Qianwen\",\n    \"tts_id\": \"sambert-zhide-v1@Tongyi-Qianwen\"\n}",
+									"raw": "{\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -5010,15 +5069,54 @@
 									}
 								},
 								"url": {
-									"raw": "{{baseUrl}}/ragflow/v1/llm/set_default_model",
+									"raw": "{{baseUrl}}/ragflow/v1/kb/list",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
 										"ragflow",
 										"v1",
-										"llm",
-										"set_default_model"
+										"kb",
+										"list"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "update kb",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/ragflow/v1/kb/list",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"ragflow",
+										"v1",
+										"kb",
+										"list"
 									]
 								}
 							},
@@ -5027,152 +5125,10 @@
 					]
 				},
 				{
-					"name": "model proxy mode",
+					"name": "User",
 					"item": [
 						{
-							"name": "get LLM factories list",
-							"request": {
-								"auth": {
-									"type": "bearer",
-									"bearer": [
-										{
-											"key": "token",
-											"value": "{{accessToken}}",
-											"type": "string"
-										}
-									]
-								},
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{baseUrl}}/proxy/ragflow/v1/llm/factories",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"proxy",
-										"ragflow",
-										"v1",
-										"llm",
-										"factories"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "get my LLMs",
-							"request": {
-								"auth": {
-									"type": "bearer",
-									"bearer": [
-										{
-											"key": "token",
-											"value": "{{accessToken}}",
-											"type": "string"
-										}
-									]
-								},
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{baseUrl}}/proxy/ragflow/v1/llm/my_llms",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"proxy",
-										"ragflow",
-										"v1",
-										"llm",
-										"my_llms"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "delete one LLM",
-							"request": {
-								"auth": {
-									"type": "bearer",
-									"bearer": [
-										{
-											"key": "token",
-											"value": "{{accessToken}}",
-											"type": "string"
-										}
-									]
-								},
-								"method": "POST",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"llm_factory\": \"Tongyi-Qianwen\",\n    \"llm_name\": \"deepseek-r1-distill-llama-8b\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{baseUrl}}/proxy/ragflow/v1/llm/delete_llm",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"proxy",
-										"ragflow",
-										"v1",
-										"llm",
-										"delete_llm"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "set api key",
-							"request": {
-								"auth": {
-									"type": "bearer",
-									"bearer": [
-										{
-											"key": "token",
-											"value": "{{accessToken}}",
-											"type": "string"
-										}
-									]
-								},
-								"method": "POST",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"llm_factory\": \"DeepSeek\",\n    \"api_key\": \"sk-826e7e7424d84b9f81ca565ed87de556\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{baseUrl}}/proxy/ragflow/v1/llm/set_api_key",
-									"host": [
-										"{{baseUrl}}"
-									],
-									"path": [
-										"proxy",
-										"ragflow",
-										"v1",
-										"llm",
-										"set_api_key"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "set default model",
+							"name": "set tenant info(set default model)",
 							"request": {
 								"auth": {
 									"type": "bearer",
@@ -5196,16 +5152,15 @@
 									}
 								},
 								"url": {
-									"raw": "{{baseUrl}}/proxy/ragflow/v1/llm/set_default_model",
+									"raw": "{{baseUrl}}/ragflow/v1/user/set_tenant_info",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
-										"proxy",
 										"ragflow",
 										"v1",
-										"llm",
-										"set_default_model"
+										"user",
+										"set_tenant_info"
 									]
 								}
 							},
