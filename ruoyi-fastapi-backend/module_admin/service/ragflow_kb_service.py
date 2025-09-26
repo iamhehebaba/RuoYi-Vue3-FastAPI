@@ -30,7 +30,7 @@ class RagflowKbService:
         return None
 
     @classmethod
-    async def create_ragflow_kb_service(cls, db: AsyncSession, kb_id: str, dept_id: int, current_user: str) -> RagflowKb:
+    async def create_ragflow_kb_service(cls, db: AsyncSession, kb_id: str, dept_id: int, user_id: int, user_name: str) -> RagflowKb:
         """
         创建知识库service层
 
@@ -50,7 +50,8 @@ class RagflowKbService:
             kb = RagflowKb(
                 id=kb_id,
                 dept_id=dept_id,
-                created_by=current_user,
+                user_id=user_id,
+                created_by=user_name,
                 created_at=datetime.now()
             )
             
@@ -58,8 +59,7 @@ class RagflowKbService:
             created_kb = await RagflowKbDao.create_ragflow_kb(db, kb)
             
             # 返回响应模型
-            
-            logger.info(f"用户 {current_user} 创建知识库 {kb_id} 成功")
+            logger.info(f"用户 {user_name} 创建知识库 {kb_id} 成功")
             return created_kb
             
         except Exception as e:
@@ -142,6 +142,50 @@ class RagflowKbService:
         except Exception as e:
             logger.error(f"根据创建者获取知识库列表时发生错误: {str(e)}")
             raise ServiceException(message="获取知识库列表失败")
+
+
+
+    @classmethod
+    async def post_process_create_kb(
+        cls, 
+        full_path: str, 
+        request: Request,     
+        query_db: AsyncSession,
+        current_user: CurrentUserModel,    
+        data_scope_sql: str,
+        payload: Any) -> Any:
+
+        """
+        创建kb后，保存kb信息到本地表ragflow_kb
+
+        :param full_path: 知识库路径
+        :param request: 请求对象
+        :param query_db: orm对象
+        :param current_user: 当前用户
+        :param data_scope_sql: 数据权限SQL
+        :param payload: 创建kb的响应数据
+        :return: 原来的request
+        """
+
+        
+        # 检查payload是否为空或结构不完整
+        if not payload or not isinstance(payload, dict):
+            logger.warning("payload为空或格式不正确")
+            return payload
+            
+        if "data" not in payload or not isinstance(payload["data"], dict):
+            logger.warning("payload.data不存在或格式不正确")
+            return payload
+            
+        if "kb_id" not in payload["data"] or not isinstance(payload["data"]["kb_id"], str):
+            logger.warning("payload.data.kb_id不存在或格式不正确")
+            raise ServiceException(message="创建知识库的响应中，payload.data.kb_id不存在或响应格式不正确")
+        
+        kb_id = payload["data"]["kb_id"]
+
+        await cls.create_ragflow_kb_service(query_db, kb_id, current_user.user.dept.dept_id, current_user.user.user_id, current_user.user.user_name)
+        
+        return payload
 
     @classmethod
     async def filter_ragflow_kb_by_permission(

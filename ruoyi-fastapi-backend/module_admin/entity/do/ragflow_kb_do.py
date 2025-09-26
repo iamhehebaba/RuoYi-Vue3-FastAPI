@@ -9,5 +9,6 @@ class RagflowKb(Base):
     
     id = Column(String(100), primary_key=True, comment='知识库ID')
     dept_id = Column(BigInteger, comment='创建该知识库的部门ID')
-    created_by = Column(String(64), comment='创建者')
+    user_id = Column(BigInteger, comment='创建该知识库的用户ID')
+    created_by = Column(String(64), comment='创建该知识库的用户名')
     created_at = Column(DateTime, default=datetime.now(), comment='创建时间')

@@ -138,9 +138,6 @@ RULES: List[RagflowModelRule] = [
         "description": "remove documents",
         "straight_forward": True,
     },
-
-
-    
     
 
     # tenant apis
