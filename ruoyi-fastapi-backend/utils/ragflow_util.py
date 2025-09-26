@@ -339,6 +339,68 @@ class RagflowClient:
         """
         return await self._make_request('DELETE', path, **kwargs)
 
+    async def forward_raw_request(self, path: str, method: str, query_params: dict, body: bytes, headers: dict = None) -> dict:
+        """
+        直接转发原始请求到Ragflow服务器，不解析和重构参数
+        
+        :param path: API路径
+        :param method: HTTP方法
+        :param query_params: 查询参数字典
+        :param body: 原始请求体
+        :param headers: 额外的请求头
+        :return: 响应数据
+        """
+        async for db in get_db():
+            try:
+                # 确保已认证
+                token = await self._get_valid_token()
+                if not token:
+                    raise Exception("无法获取有效的认证token")
+                
+                # 设置认证头
+                request_headers = headers.copy() if headers else {}
+                request_headers['authorization'] = token
+                
+                # 构建完整URL
+                url = f"{self.base_url}{path}"
+                
+                # 准备请求参数
+                kwargs = {
+                    'headers': request_headers,
+                    'timeout': 30
+                }
+                
+                # 添加查询参数
+                if query_params:
+                    kwargs['params'] = query_params
+                
+                # 添加请求体
+                if body:
+                    kwargs['data'] = body
+                
+                # 发送请求
+                response = self.session.request(method.upper(), url, **kwargs)
+                
+                # 如果token过期（401错误），尝试重新认证
+                if await self._refresh_token_needed(response):
+                    logger.info("Token可能已过期，尝试重新认证")
+                    # 刷新token
+                    token = await self._refresh_token(db)
+                    if token:
+                        request_headers['authorization'] = token
+                        kwargs['headers'] = request_headers
+                        response = self.session.request(method.upper(), url, **kwargs)
+                    else:
+                        raise Exception("刷新token失败，无法继续请求")
+                
+                api_response = response.json()
+                logger.info(f"ragflow 原始请求转发响应: {api_response}")
+                return api_response                
+                
+            except Exception as e:
+                logger.error(f"原始请求转发过程中发生错误: {e}")
+                raise e
+
 
 # 创建全局实例
 ragflow_client = RagflowClient()

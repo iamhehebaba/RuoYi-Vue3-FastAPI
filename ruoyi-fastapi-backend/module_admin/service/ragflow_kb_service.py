@@ -213,34 +213,61 @@ class RagflowKbService:
         query_db: AsyncSession,
         current_user: CurrentUserModel,    
         data_scope_sql: str,
-        payload: Any) -> Any:
+        body: Any) -> Any:
 
         """
         根据权限设置（数据范围），通过service层检查用户是否有操作权限
+        支持从form data或payload中获取kb_id
 
         :param full_path: 知识库路径
         :param request: 请求对象
         :param query_db: orm对象
         :param current_user: 当前用户
         :param data_scope_sql: 数据权限SQL
-        :param payload: 知识库列表
-        :return: 过滤后的知识库列表
+        :param body: 请求体数据，
+        :return: 原始payload数据
         """
         kb_list = await cls.get_ragflow_kb_list_service(query_db, data_scope_sql)
         kb_id_list = [kb.id for kb in kb_list]
         
-        # 检查payload是否为空或结构不完整
-        if not payload or not isinstance(payload, dict):
-            logger.warning("payload为空或格式不正确")
-            return payload
+        target_kb_id = None
+        
+        # 尝试从form data中获取kb_id
+        if request.method == 'POST':
+            try:
+                form_data = await request.form()
+                if "kb_id" in form_data:
+                    target_kb_id = form_data["kb_id"]
+                    logger.info(f"从form data中获取到kb_id: {target_kb_id}")
+            except Exception as e:
+                logger.debug(f"无法解析form data: {str(e)}")
             
-        if "kb_id" not in payload:
-            logger.warning("payload.kb_id不存在或格式不正确")
-            return payload
-        # 过滤kbs列表
-        target_kb_id = payload["kb_id"]
+            # 如果form data中没有kb_id，尝试从payload中获取
+            if not target_kb_id:
+                payload = None
+                if body:
+                    try:
+                        import json
+                        payload = json.loads(body.decode('utf-8'))
+                    except (json.JSONDecodeError, UnicodeDecodeError):
+                        payload = body
+                if payload and isinstance(payload, dict) and "kb_id" in payload:
+                    target_kb_id = payload["kb_id"]
+                    logger.info(f"从payload中获取到kb_id: {target_kb_id}")
+        elif request.method == 'GET':
+            if 'kb_id' in request.query_params:
+                target_kb_id = request.query_params['kb_id']
+                logger.info(f"从query params中获取到kb_id: {target_kb_id}")
+        
+        # 如果仍然没有找到kb_id，记录警告并返回原始数据
+        if not target_kb_id:
+            logger.warning(f"未能从request中获取到kb_id, method: {request.method}")
+            return request
+        
+        # 检查权限
         if target_kb_id not in kb_id_list:
             logger.info(f"用户 {current_user.user.user_name} 无权限访问知识库: id={target_kb_id}, 退出处理")
             raise PermissionException(data='', message=f'该用户无此知识库权限: {target_kb_id}')
         
-        return payload        
+        logger.info(f"用户 {current_user.user.user_name} 有权限访问知识库: id={target_kb_id}")
+        return request
