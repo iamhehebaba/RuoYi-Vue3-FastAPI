@@ -80,6 +80,7 @@ class ThreadDao:
         """
         threads = (await db.execute(
             select(LanggraphThread)
+            .where(LanggraphThread.graph_id == request.metadata.get("graph_id") if request.metadata and request.metadata.get("graph_id") is not None else 1 == 1)
             .where(eval(data_scope_sql))
             .order_by(LanggraphThread.created_at.desc())
             .limit(request.limit)
