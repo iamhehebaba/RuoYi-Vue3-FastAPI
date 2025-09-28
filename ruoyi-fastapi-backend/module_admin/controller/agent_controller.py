@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from config.get_db import get_db, get_db_ragflow
 from exceptions.exception import ModelValidatorException
@@ -240,7 +240,6 @@ async def get_thread_history(
 @agentController.post('/threads/search')
 async def get_thread_list(
     request: Request,
-    search_request: ThreadSearchModel,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUserModel = Depends(LoginService.get_current_user),
     data_scope_sql: str = Depends(GetDataScope('LanggraphThread', user_alias='created_by', self_enforced=True))
@@ -250,13 +249,17 @@ async def get_thread_list(
     """
     # 获取thread列表
     thread_list = await ThreadService.get_thread_list_service(
+        request,
         db,
-        search_request,
+        current_user,
         data_scope_sql
     )
     
     logger.info(f"用户 {current_user.user.get_user_name()} 成功获取thread列表，返回 {len(thread_list)} 条记录")
     
-    return ResponseUtil.success(data=thread_list, msg="获取thread列表成功")
+    return JSONResponse(
+        status_code=200,
+        content=thread_list
+    )
 
 
