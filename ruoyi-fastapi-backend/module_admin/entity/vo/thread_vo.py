@@ -47,3 +47,4 @@ class ThreadSearchModel(BaseModel):
     
     limit: int = Field(..., description="限制返回的记录数量")
     offset: int = Field(..., description="偏移量")
+    metadata: Optional[dict] = Field(None, description="元数据")
