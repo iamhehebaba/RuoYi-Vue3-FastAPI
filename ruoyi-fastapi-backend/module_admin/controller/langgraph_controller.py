@@ -34,18 +34,53 @@ from module_admin.controller.proxy_controller import ProxyRule, ProxyRuleHandler
 LANGGRAPH_RULES: List[ProxyRule] = [
     # langgraph apis
     {
+        "path_prefix": "\/assistants\/search",
+        "method": "POST",
+        "straight_forward": True,
+        "description": "search assistants"
+    },       
+    {
         "path_prefix": "\/threads",
         "method": "POST",
         "straight_forward": True,
         "description": "create a thread"
     },
     {
-        "path_prefix": "\/assistants\/search",
+        "path_prefix": "\/threads/search",
         "method": "POST",
         "straight_forward": True,
-        "description": "search assistants"
+        "description": "search threads"
     },    
-
+    {
+        "path_prefix": "\/threads\/.*\/runs",
+        "method": "POST",
+        "straight_forward": True,
+        "description": "create a run"
+    },   
+    {
+        "path_prefix": "\/threads\/.*\/runs\/stream",
+        "method": "POST",
+        "straight_forward": True,
+        "description": "create a run in stream mode"
+    },   
+    {
+        "path_prefix": "\/threads\/.*\/runs\/.*",
+        "method": "GET",
+        "straight_forward": True,
+        "description": "get a run, including its status"
+    },   
+    {
+        "path_prefix": "\/threads\/.*\/runs\/.*/join",
+        "method": "GET",
+        "straight_forward": True,
+        "description": "wait and get a run's result"
+    },       
+    {
+        "path_prefix": "\/threads\/.*\/history",
+        "method": "POST",
+        "straight_forward": True,
+        "description": "wait and get a run's result"
+    },           
 ]    
 
 langgraphController = APIRouter(prefix="/proxy/langgraph", tags=["Langgraph API"])
