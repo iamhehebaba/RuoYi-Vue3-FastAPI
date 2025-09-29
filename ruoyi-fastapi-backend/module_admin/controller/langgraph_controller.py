@@ -34,13 +34,13 @@ from module_admin.controller.proxy_controller import ProxyRule, ProxyRuleHandler
 LANGGRAPH_RULES: List[ProxyRule] = [
     # langgraph apis
     {
-        "path_prefix": "/threads",
+        "path_prefix": "\/threads",
         "method": "POST",
         "straight_forward": True,
         "description": "create a thread"
     },
     {
-        "path_prefix": "/assistants/search",
+        "path_prefix": "\/assistants\/search",
         "method": "POST",
         "straight_forward": True,
         "description": "search assistants"
