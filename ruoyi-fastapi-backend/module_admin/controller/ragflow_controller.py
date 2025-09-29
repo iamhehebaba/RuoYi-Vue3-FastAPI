@@ -15,7 +15,7 @@ from module_admin.entity.vo.user_vo import CurrentUserModel
 from utils.ragflow_util import ragflow_client
 from utils.log_util import logger
 from config.env import RagflowConfig
-from module_admin.controller.proxy_controller import ProxyRule, proxy_rule_executor
+from module_admin.controller.proxy_controller import ProxyRule, ProxyRuleHandler
 
 """
 基于 URL Path 的权限校验 + Ragflow API 转发
@@ -29,7 +29,8 @@ from module_admin.controller.proxy_controller import ProxyRule, proxy_rule_execu
 - 可以根据需要调整 RULES 中的 path_prefix、权限设置。
 """
 
-ragflowController = APIRouter(prefix="/ragflow", tags=["Ragflow模型管理"])
+
+
 
 # 根据 model_controller.py 中的API配置转发规则
 RAGFLOW_RULES: List[ProxyRule] = [
@@ -155,6 +156,8 @@ RAGFLOW_RULES: List[ProxyRule] = [
     }
 ]    
 
+ragflowController = APIRouter(prefix="/ragflow", tags=["Ragflow模型管理"])
+ragflow_rule_handler = ProxyRuleHandler(RAGFLOW_RULES, ragflow_client)
 
 
 @ragflowController.api_route(
@@ -169,5 +172,5 @@ async def ragflow_proxy_all(
     data_scope_sql: str = Depends(GetDataScope('RagflowKb')),
 ) -> Response:
 
-    response = await proxy_rule_executor(RAGFLOW_RULES, full_path, request, query_db, current_user, data_scope_sql)
+    response = await ragflow_rule_handler.proxy_rule_executor(full_path, request, query_db, current_user, data_scope_sql)
     return response

@@ -84,6 +84,13 @@ class RagflowSettings(BaseSettings):
     ragflow_email: str = 'service@ruoyi.com'
     ragflow_password: str = 'Service!23'
 
+class LanggraphSettings(BaseSettings):
+    """
+    Langgraph配置
+    """
+
+    langgraph_api_url: str = 'http://localhost:8000'
+
 
 class GenSettings:
     """
@@ -222,6 +229,14 @@ class GetConfig:
         # 实例化Ragflow配置模型
         return RagflowSettings()
 
+    @lru_cache()
+    def get_langgraph_config(self):
+        """
+        获取Langgraph配置
+        """
+        # 实例化Langgraph配置模型
+        return LanggraphSettings()
+
     @staticmethod
     def parse_cli_args():
         """
@@ -269,3 +284,5 @@ GenConfig = get_config.get_gen_config()
 UploadConfig = get_config.get_upload_config()
 # Ragflow配置
 RagflowConfig = get_config.get_ragflow_config()
+# Langgraph配置
+LanggraphConfig = get_config.get_langgraph_config()
