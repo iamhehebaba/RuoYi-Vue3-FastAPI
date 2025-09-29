@@ -20,7 +20,7 @@ class ProxyRule(Dict[str, Any]):
     method: str  # HTTP方法
     straight_forward: Optional[bool] = False  # 是否直接转发而没有任何分析处理
     permission: Optional[Union[str, List[str]]]  # 需要的权限标识（字符串或列表）
-    perm_strict: Optional[bool]  # 权限为列表时是否要求全部满足
+    perm_strict: Optional[bool] = False # 权限为列表时是否要求全部满足
     upstream_path: Optional[str]  # 如果有值，则使用此路径替换path_prefix的值
     description: Optional[str] # 描述信息
     pre_processor: Optional[Callable[[str, Request, AsyncSession, CurrentUserModel, str, Any], Awaitable[Any]]]  # 前处理函数

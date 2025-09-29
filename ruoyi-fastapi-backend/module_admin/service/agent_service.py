@@ -1,13 +1,16 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import Request, HTTPException
 from typing import List, Dict, Any
 from module_admin.dao.agent_dao import AgentDao
 from module_admin.entity.vo.agent_vo import AgentQueryModel
 from module_admin.entity.do.agent_do import SysAgent
 from exceptions.exception import ServiceException, PermissionException
-from utils.common_util import CamelCaseUtil
+from utils.common_util import CamelCaseUtil, SqlalchemyUtil
 from utils.langgraph_util import LanggraphApiClient
 from module_admin.entity.vo.user_vo import CurrentUserModel
 from loguru import logger
+from collections import defaultdict
+
 
 
 class AgentService:
@@ -107,36 +110,23 @@ class AgentService:
             raise e
 
     @classmethod
-    async def search_agents(cls, db: AsyncSession, role_ids: List[int], request: AgentQueryModel) -> List[Dict[str, Any]]:
+    async def get_agents_for_current_user(cls, db: AsyncSession, current_user: CurrentUserModel) -> List[SysAgent]:
         """
         根据角色权限搜索智能体列表
 
         :param db: orm对象
-        :param role_ids: 用户角色ID列表
-        :param request: 搜索请求参数
+        :param current_user: 当前用户对象
         :return: 智能体列表，按name排序
         """
         try:
             # 获取智能体列表
-            agents = await AgentDao.get_agents_by_role_ids(db, role_ids, request)
-            
-            # 转换为响应格式
-            agent_list = []
-            for agent in agents:
-                agent_dict = {
-                    "graph_id": agent.graph_id,
-                    "name": agent.name,
-                    "description": agent.description,
-                    "status": agent.status,
-                    "created_at": agent.created_at.isoformat() if agent.created_at else None,
-                    "created_by": agent.created_by,
-                    "remark": agent.remark,
-                    "order_num": agent.order_num
-                }
-                agent_list.append(agent_dict)
-            
+            if current_user.user.admin:
+                agent_list = await AgentDao.get_agent_list(db, AgentQueryModel(), '1==1')
+            else:
+                role_id_list = [role.role_id for role in current_user.user.role]
+                agent_list = await AgentDao.get_agents_by_role_ids(db, role_id_list)
             return agent_list
-            
+         
         except Exception as e:
             logger.error(f"搜索智能体列表失败: {e}")
             raise e
@@ -179,3 +169,59 @@ class AgentService:
         if not set(target_agent_id_list).issubset(set(current_user.user.agent_ids)):
             raise PermissionException(data='', message=f'当前用户没有权限访问所有的智能体:{target_agent_id_list}')
                 
+    @classmethod
+    async def post_process_agent_search(
+        cls, 
+        full_path: str, 
+        request: Request,     
+        query_db: AsyncSession,
+        current_user: CurrentUserModel,    
+        data_scope_sql: str,
+        payload: Any) -> Any:
+
+        """
+        对智能体列表进行权限过滤，同时把存放在sys_agent中的agent信息作为metadata插入从langgraph返回的assistant list中
+
+        :param full_path: 知识库路径
+        :param request: 请求对象
+        :param query_db: orm对象
+        :param current_user: 当前用户
+        :param data_scope_sql: 数据权限SQL
+        :param payload: 智能体列表
+        :return: 过滤后的智能体列表
+        """
+        agent_list = await cls.get_agents_for_current_user(query_db, current_user)
+        permitted_graph_id_list = [agent.graph_id for agent in agent_list]
+        graph_id_to_agent = defaultdict(dict)
+        for agent in agent_list:
+            graph_id_to_agent[agent.graph_id] = agent
+        
+        # 检查payload是否为空或结构不完整
+        if not payload or not isinstance(payload, list):
+            logger.warning("payload为空或格式不正确")
+            return payload
+        
+        # 过滤agent列表
+        original_agents = payload
+        filtered_agents = []
+        
+        for agent in original_agents:
+            if isinstance(agent, dict) and "graph_id" in agent:
+                graph_id = agent["graph_id"]
+                if graph_id in permitted_graph_id_list:
+                    agent["metadata"].update(SqlalchemyUtil.serialize_result(graph_id_to_agent[graph_id]))
+                    # 保留有权限的智能体
+                    filtered_agents.append(agent)
+                else:
+                    # 移除无权限的智能体并记录日志
+                    logger.info(f"用户 {current_user.user.user_name} 无权限访问智能体: graphId={graph_id}，已从列表中移除")
+            else:
+                # agent结构不正确，记录日志但不添加到结果中
+                logger.warning(f"智能体数据结构不正确: {agent}")
+        
+        # 更新payload
+        payload = filtered_agents
+        
+        logger.info(f"智能体权限过滤完成，原始数量: {len(original_agents)}, 过滤后数量: {len(filtered_agents)}")
+        
+        return payload                

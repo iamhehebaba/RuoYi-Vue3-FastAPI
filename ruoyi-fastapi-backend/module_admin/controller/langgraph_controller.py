@@ -16,7 +16,7 @@ from utils.langgraph_client import langgraph_client
 from utils.log_util import logger
 from config.env import RagflowConfig
 from module_admin.controller.proxy_controller import ProxyRule, ProxyRuleHandler
-
+from module_admin.service.agent_service import AgentService
 """
 基于 URL Path 的权限校验 + Langgraph API 转发
 
@@ -37,6 +37,9 @@ LANGGRAPH_RULES: List[ProxyRule] = [
         "path_prefix": "\/assistants\/search",
         "method": "POST",
         "straight_forward": True,
+        "permission": ["system:role:add", "system:role:edit"],
+        "perm_strict": False,
+        "post_processor": AgentService.post_process_agent_search,
         "description": "search assistants"
     },       
     {
