@@ -62,6 +62,7 @@ LANGGRAPH_RULES: List[ProxyRule] = [
         "path_prefix": "\/threads\/.*\/runs",
         "method": "POST",
         "straight_forward": True,
+        "pre_processor": ThreadService.validate_thread_permission,
         "description": "create a run"
     },   
     {
