@@ -10,6 +10,9 @@ from utils.common_util import CamelCaseUtil
 from utils.log_util import logger
 from exceptions.exception import ModelValidatorException
 from module_admin.entity.vo.user_vo import CurrentUserModel
+from module_admin.service.agent_service import AgentService
+
+
 
 import httpx
 
@@ -276,3 +279,52 @@ class ThreadService:
 
         api_response = await api_client.forward_raw_request(request, "/threads/search", body)
         return api_response
+
+    @classmethod
+    async def validate_thread_metadata(
+        cls, 
+        full_path: str, 
+        request: Request,     
+        query_db: AsyncSession,
+        current_user: CurrentUserModel,    
+        data_scope_sql: str,
+        body: Any) -> Any:
+        """
+        校验当前用户是否对于指定的智能体（通过payload.metadata中的graph_id）有访问权限; metadata中的user_id是否是当前用户id
+        
+        :param full_path: 知识库路径
+        :param request: 请求对象
+        :param query_db: orm对象
+        :param current_user: 当前用户
+        :param data_scope_sql: 数据权限SQL
+        :param payload: 智能体列表
+        :return: 校验结果
+        """
+        payload = None
+        if body:
+            try:
+                import json
+                payload = json.loads(body.decode('utf-8'))
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                payload = body
+
+        if payload and isinstance(payload, dict) and "metadata" in payload:
+            metadata = payload["metadata"]
+            graph_id = metadata.get("graph_id")
+            if graph_id is None:
+                logger.error("metadata.graph_id字段不存在!")
+                raise ModelValidatorException("metadata.graph_id字段不存在!")
+            
+            await AgentService.check_user_agent_scope_services(query_db, current_user, [graph_id])
+
+            user_id = metadata.get("user_id")
+            if user_id is None:
+                logger.error("metadata.user_id字段不存在!")
+                raise ModelValidatorException("metadata.user_id字段不存在!")
+            elif user_id != current_user.user.user_id:
+                logger.error("metadata.user_id必须等于当前用户的user_id!")
+                raise ModelValidatorException("metadata.user_id必须等于当前用户的user_id!")
+
+        else:
+            logger.error("metadata字段不存在!")
+            raise ModelValidatorException("metadata字段不存在!")
