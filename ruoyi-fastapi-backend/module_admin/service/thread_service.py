@@ -8,7 +8,7 @@ from module_admin.entity.vo.thread_vo import ThreadCreateModel, RunCreateModel, 
 from utils.langgraph_util import LanggraphApiClient
 from utils.common_util import CamelCaseUtil
 from utils.log_util import logger
-from exceptions.exception import ModelValidatorException
+from exceptions.exception import ModelValidatorException, ServiceException
 from module_admin.entity.vo.user_vo import CurrentUserModel
 from module_admin.service.agent_service import AgentService
 
@@ -328,3 +328,57 @@ class ThreadService:
         else:
             logger.error("metadata字段不存在!")
             raise ModelValidatorException("metadata字段不存在!")
+
+    @classmethod
+    async def connect_thread_with_agent(
+        cls, 
+        full_path: str, 
+        request: Request,     
+        query_db: AsyncSession,
+        current_user: CurrentUserModel,    
+        data_scope_sql: str,
+        payload: Any) -> Any:
+        """
+        在通过langgraph api创建了thread之后，将thread与智能体关联起来（通过数据库表）
+        
+        :param full_path: create thread url path
+        :param request: 请求对象
+        :param query_db: orm对象
+        :param current_user: 当前用户
+        :param data_scope_sql: 数据权限SQL
+        :param payload: create thread response
+        :return: 原来的payload
+        """
+
+        if not payload or not isinstance(payload, dict):
+            logger.warning("payload为空或格式不正确")
+            return payload
+
+        thread_id = payload.get("thread_id")
+        metadata = payload.get("metadata")
+        if metadata and metadata.get("graph_id"):
+            graph_id = metadata.get("graph_id")
+
+        if thread_id and graph_id:
+            try:
+                thread_record = LanggraphThread(
+                    thread_id=thread_id,
+                    graph_id=graph_id,
+                    user_id=current_user.user.user_id,
+                    created_by=current_user.user.user_name,
+                    created_at=datetime.now()
+                )
+                
+                await ThreadDao.create_thread(query_db, thread_record)
+                logger.info(f"Thread记录已保存到数据库: {thread_record.thread_id}")
+                await query_db.commit()
+
+            except Exception as e:
+                logger.error(f"保存Thread记录到数据库时出错: {e}")
+                raise ServiceException("出现数据库内部错误！")
+        else:
+            logger.error(f"thread_id或graph_id为空")
+            raise ServiceException("Langgraph响应中thread_id或graph_id为空！")
+
+        return payload
+                

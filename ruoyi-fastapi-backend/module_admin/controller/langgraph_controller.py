@@ -48,6 +48,7 @@ LANGGRAPH_RULES: List[ProxyRule] = [
         "method": "POST",
         "straight_forward": True,
         "pre_processor": ThreadService.validate_thread_metadata,
+        "post_processor": ThreadService.connect_thread_with_agent,
         "description": "create a thread"
     },
     {

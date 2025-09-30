@@ -1129,7 +1129,8 @@ drop table if exists langgraph_thread;
 create table langgraph_thread (
   thread_id         varchar(100)    not null,                   
   graph_id          varchar(100)    not null,                   
-  assistant_id      varchar(100),                               
+  assistant_id      varchar(100),                 
+  user_id           bigint(20),                               
   created_by        varchar(64)     default 'admin',            
   created_at        timestamp(0),                               
   primary key (thread_id)
@@ -1138,6 +1139,7 @@ create table langgraph_thread (
 comment on langgraph_thread.thread_id is 'langgraph的thread_id，UUID字符串';
 comment on langgraph_thread.graph_id is 'langgraph的graph_id，UUID字符串';
 comment on langgraph_thread.assistant_id is 'langgraph的assistant_id，UUID字符串';
+comment on langgraph_thread.user_id is '创建者user_id';
 comment on langgraph_thread.created_by is '创建者';
 comment on langgraph_thread.created_at is '创建时间';
 
