@@ -25,6 +25,9 @@ from module_admin.controller.user_controller import userController
 from module_generator.controller.gen_controller import genController
 from module_admin.controller.agent_controller import agentController
 from module_admin.controller.ragflow_controller import ragflowController
+from module_admin.controller.langgraph_controller import langgraphController
+
+
 
 from sub_applications.handle import handle_sub_applications
 from utils.common_util import worship
@@ -85,6 +88,7 @@ controller_list = [
     {'router': genController, 'tags': ['代码生成']},
     {'router': agentController, 'tags': ['智能体管理']},
     {'router': ragflowController, 'tags': ['Ragflow模型管理']},
+    {'router': langgraphController, 'tags': ['Langgraph智能体管理']},
 ]
 
 for controller in controller_list:

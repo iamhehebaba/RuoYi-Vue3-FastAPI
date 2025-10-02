@@ -15,7 +15,7 @@ from module_admin.entity.vo.user_vo import CurrentUserModel
 from utils.ragflow_util import ragflow_client
 from utils.log_util import logger
 from config.env import RagflowConfig
-
+from module_admin.controller.proxy_controller import ProxyRule, ProxyRuleHandler
 
 """
 基于 URL Path 的权限校验 + Ragflow API 转发
@@ -30,24 +30,10 @@ from config.env import RagflowConfig
 """
 
 
-ragflowController = APIRouter(prefix="/ragflow", tags=["Ragflow模型管理"])
-
-
-class RagflowModelRule(Dict[str, Any]):
-    """用于类型提示的规则字典结构"""
-    path_prefix: str  # 要匹配的前缀（相对于 /ragflow_model 的子路径，例如 /v1/llm/factories）
-    method: str  # HTTP方法
-    straight_forward: Optional[bool] = False  # 是否直接转发而没有任何分析处理
-    permission: Optional[Union[str, List[str]]]  # 需要的权限标识（字符串或列表）
-    perm_strict: Optional[bool]  # 权限为列表时是否要求全部满足
-    upstream_path: Optional[str]  # 如果有值，则使用此路径替换path_prefix的值
-    description: Optional[str] # 描述信息
-    pre_processor: Optional[Callable[[str, Request, AsyncSession, CurrentUserModel, str, Any], Awaitable[Any]]]  # 前处理函数
-    post_processor: Optional[Callable[[str, Request, AsyncSession, CurrentUserModel, str, Any], Awaitable[Any]]]  # 后处理函数
 
 
 # 根据 model_controller.py 中的API配置转发规则
-RULES: List[RagflowModelRule] = [
+RAGFLOW_RULES: List[ProxyRule] = [
     # model apis
     {
         "path_prefix": "/v1/llm/factories",
@@ -109,7 +95,7 @@ RULES: List[RagflowModelRule] = [
     # document apis
     {
         "path_prefix": "/v1/document/list",
-        "method": "POST",
+        "method": "GET",
         "permission": ["kb:doc:list"],
         "description": "list documents in a kb",
         "pre_processor": RagflowKbService.check_ragflow_kb_permission,
@@ -170,164 +156,21 @@ RULES: List[RagflowModelRule] = [
     }
 ]    
 
-def _match_rule(sub_path: str, method: str) -> Optional[RagflowModelRule]:
-    """
-    按最长前缀匹配规则选取转发配置，method必须严格匹配。
-
-    sub_path: 不含 /ragflow_model 前缀的真实子路径，例如 "/v1/llm/factories"
-    method: HTTP方法，例如 "GET", "POST"
-    """
-    best: Optional[RagflowModelRule] = None
-    for rule in RULES:
-        # method必须严格匹配
-        if rule["method"].upper() != method.upper() and rule["method"] != "*":
-            continue
-            
-        prefix = rule["path_prefix"].rstrip("/")
-        if not prefix:
-            continue
-            
-        # 检查路径是否匹配（精确匹配或前缀匹配）
-        if sub_path.startswith(prefix + "/") or sub_path == prefix or prefix == "*":
-            # 按最长前缀匹配
-            if best is None or len(prefix) > len(best["path_prefix"].rstrip("/")):
-                best = rule
-    return best
-
-
-async def _require_permission_for_path(
-    request: Request,
-    current_user: CurrentUserModel = Depends(LoginService.get_current_user),
-) -> bool:
-    """
-    动态依赖：基于路径匹配到的规则，复用现有依赖进行权限校验。
-    找不到匹配规则时，默认拒绝（抛出 PermissionException）。
-    """
-    full_path: str = request.path_params.get("full_path", "")
-    # sub_path 是相对于 /ragflow_model 的子路径，始终以 "/" 开头
-    sub_path = "/" + full_path.lstrip("/")
-    method = request.method
-    
-    rule = _match_rule(sub_path, method)
-    if not rule:
-        # 未配置的路径，不允许访问
-        # 交给 CheckUserInterfaceAuth 抛出统一的 PermissionException
-        CheckUserInterfaceAuth("__ragflow_model:not-allowed__")(current_user)
-        return False  # 实际到不了这里
-
-    # 进行权限校验（若配置了）
-    if rule.get("permission") is not None:
-        perm_checker = CheckUserInterfaceAuth(rule["permission"], is_strict=rule.get("perm_strict", False))
-        perm_checker(current_user)
-
-    return True
+ragflowController = APIRouter(prefix="/ragflow", tags=["Ragflow模型管理"])
+ragflow_rule_handler = ProxyRuleHandler(RAGFLOW_RULES, ragflow_client)
 
 
 @ragflowController.api_route(
     "/{full_path:path}",
     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    dependencies=[Depends(_require_permission_for_path)],
 )
-async def ragflow_model_proxy_all(
+async def ragflow_proxy_all(
     full_path: str, 
     request: Request,     
     query_db: AsyncSession = Depends(get_db),
     current_user: CurrentUserModel = Depends(LoginService.get_current_user),    
     data_scope_sql: str = Depends(GetDataScope('RagflowKb')),
 ) -> Response:
-    """
-    统一Ragflow模型API代理入口：匹配 RULES 并转发请求。
-    """
-    sub_path = "/" + full_path.lstrip("/")
-    method = request.method
-    rule = _match_rule(sub_path, method)
-    # 这里理论上一定能匹配，因为 _require_permission_for_path 已经做过一次匹配与校验
-    assert rule is not None
 
-    # try:
-    # 确定实际转发的路径
-    actual_path = sub_path
-    if rule.get("upstream_path"):
-        actual_path = rule["upstream_path"]
-    
-    body = await request.body()
-
-    if rule.get("pre_processor"):
-        await rule["pre_processor"](
-            full_path, request, query_db, current_user, data_scope_sql, body
-        )
-
-    # 检查是否为通配符规则，如果是则直接转发原始请求
-    if rule.get("straight_forward"):
-        # 直接转发原始请求，不解析和重构参数
-        
-        query_params = dict(request.query_params)
-        
-        # 获取原始请求头（排除一些不需要转发的头）
-        original_headers = dict(request.headers)
-        # 移除一些不应该转发的头
-        headers_to_remove = ['host', 'content-length', 'authorization']
-        for header in headers_to_remove:
-            original_headers.pop(header, None)
-        
-        # 检查是否为form data请求，确保Content-Type头被正确传递
-        content_type = request.headers.get('content-type', '')
-        if content_type:
-            # 保留Content-Type头以支持form data转发
-            original_headers['content-type'] = content_type
-        
-        response_data = await ragflow_client.forward_raw_request(
-            actual_path, method, query_params, body, original_headers
-        )
-    else:
-        # 原有的处理逻辑：解析请求参数并重构
-        # 提取请求信息
-        query_params = dict(request.query_params)
-        
-        # 准备请求参数
-        kwargs = {}
-        if query_params:
-            kwargs['params'] = query_params
-        if body:
-            try:
-                import json
-                kwargs['json'] = json.loads(body.decode('utf-8'))
-            except (json.JSONDecodeError, UnicodeDecodeError):
-                kwargs['data'] = body
-        
-        # 使用 RagflowClient 转发请求
-        if method.upper() == 'GET':
-            response_data = await ragflow_client.get(actual_path, **kwargs)
-        elif method.upper() == 'POST':
-            response_data = await ragflow_client.post(actual_path, **kwargs)
-        elif method.upper() == 'PUT':
-            response_data = await ragflow_client.put(actual_path, **kwargs)
-        elif method.upper() == 'DELETE':
-            response_data = await ragflow_client.delete(actual_path, **kwargs)
-        else:
-            # 其他方法暂不支持
-            return JSONResponse(
-                status_code=405,
-                content={"code": 405, "message": f"Method {method} not allowed"}
-            )
-    
-    logger.info(f"Ragflow API {method} {actual_path} 调用成功")
-    
-    # 如果配置了后处理函数，则调用进行后处理
-    if rule.get("post_processor"):
-        response_data = await rule["post_processor"](
-            full_path, request, query_db, current_user, data_scope_sql, response_data
-        )
-    
-    # 返回响应
-    return JSONResponse(
-        status_code=200,
-        content=response_data
-    )
-        
-    # except Exception as e:
-    #     logger.error(f"Ragflow API {method} {actual_path} 调用失败: {str(e)}")
-    #     return JSONResponse(
-    #         status_code=500,
-    #         content={"code": 500, "message": f"Ragflow API调用失败: {str(e)}"}
-    #     )
+    response = await ragflow_rule_handler.proxy_rule_executor(full_path, request, query_db, current_user, data_scope_sql)
+    return response
