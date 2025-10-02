@@ -1,4 +1,5 @@
 from typing import Dict, Any, Optional, AsyncGenerator
+from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 from module_admin.dao.thread_dao import ThreadDao
@@ -7,6 +8,9 @@ from module_admin.entity.vo.thread_vo import ThreadCreateModel, RunCreateModel, 
 from utils.langgraph_util import LanggraphApiClient
 from utils.common_util import CamelCaseUtil
 from utils.log_util import logger
+from exceptions.exception import ModelValidatorException
+from module_admin.entity.vo.user_vo import CurrentUserModel
+
 import httpx
 
 
@@ -233,17 +237,42 @@ class ThreadService:
             raise e
 
     @classmethod
-    async def get_thread_list_service(cls, db: AsyncSession, request: ThreadSearchModel, data_scope_sql: str):
+    async def _validate_thread_search_request(cls, body, current_user: CurrentUserModel):
         """
-        获取thread列表，按created_at降序排序，支持分页
+        校验thread搜索请求参数
 
-        :param db: orm对象
-        :param request: 搜索请求参数
-        :return: thread列表
+        :param body: 搜索请求参数
+        :return: None
         """
         try:
-            threads = await ThreadDao.get_thread_list(db, request, data_scope_sql)
-            return CamelCaseUtil.transform_result(threads)
-        except Exception as e:
-            logger.error(f"获取thread列表失败: {e}")
-            raise e
+            import json
+            if not body:
+                logger.error("请求参数不能为空!")
+                raise ModelValidatorException("请求参数不能为空!")
+
+            thread_search_model = json.loads(body.decode('utf-8'))
+            if thread_search_model.get("metadata") is None or thread_search_model.get("metadata").get("user_id") != current_user.user.user_id:
+                logger.error("metadata.user_id必须存在并且等于当前用户的user_id!")
+                raise ModelValidatorException("metadata.user_id必须存在并且等于当前用户的user_id!")
+        except json.JSONDecodeError as e:
+            logger.error(f"解析thread搜索请求参数失败: {e}")
+            raise ModelValidatorException("请求参数格式错误!")
+
+    @classmethod
+    async def get_thread_list_service(cls, request: Request, db: AsyncSession, current_user: CurrentUserModel,data_scope_sql: str):
+        """
+        转发request给Langgraph API，获取thread列表，然后再进行基于权限的过滤
+
+        :param request: 搜索请求参数
+        :param db: orm对象
+        :param current_user: 当前用户
+        :param data_scope_sql: 数据范围sql语句条件
+        :return: thread列表
+        """
+        body = await request.body()
+        await cls._validate_thread_search_request(body, current_user)
+
+        api_client = LanggraphApiClient()
+
+        api_response = await api_client.forward_raw_request(request, "/threads/search", body)
+        return api_response
