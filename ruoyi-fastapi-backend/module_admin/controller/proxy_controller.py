@@ -1,3 +1,4 @@
+import re
 from typing import Any, Dict, List, Optional, Union, Callable, Awaitable
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends, Request, Response
@@ -19,7 +20,7 @@ class ProxyRule(Dict[str, Any]):
     method: str  # HTTP方法
     straight_forward: Optional[bool] = False  # 是否直接转发而没有任何分析处理
     permission: Optional[Union[str, List[str]]]  # 需要的权限标识（字符串或列表）
-    perm_strict: Optional[bool]  # 权限为列表时是否要求全部满足
+    perm_strict: Optional[bool] = False # 权限为列表时是否要求全部满足
     upstream_path: Optional[str]  # 如果有值，则使用此路径替换path_prefix的值
     description: Optional[str] # 描述信息
     pre_processor: Optional[Callable[[str, Request, AsyncSession, CurrentUserModel, str, Any], Awaitable[Any]]]  # 前处理函数
@@ -37,26 +38,37 @@ class ProxyRuleHandler:
 
     def _match_rule(self, sub_path: str, method: str) -> Optional[ProxyRule]:
         """
-        按最长前缀匹配规则选取转发配置，method必须严格匹配。
+        按最长正则表达式匹配规则选取转发配置，method必须严格匹配。
 
         sub_path: 不含 /ragflow_model 前缀的真实子路径，例如 "/v1/llm/factories"
         method: HTTP方法，例如 "GET", "POST"
         """
         best: Optional[ProxyRule] = None
+        best_match_length = 0
+        
         for rule in self.proxy_rules:
             # method必须严格匹配
             if rule["method"].upper() != method.upper() and rule["method"] != "*":
                 continue
                 
-            prefix = rule["path_prefix"].rstrip("/")
-            if not prefix:
+            path_prefix_pattern = rule["path_prefix"]
+            if not path_prefix_pattern:
                 continue
                 
-            # 检查路径是否匹配（精确匹配或前缀匹配）
-            if sub_path.startswith(prefix + "/") or sub_path == prefix or prefix == "*":
-                # 按最长前缀匹配
-                if best is None or len(prefix) > len(best["path_prefix"].rstrip("/")):
-                    best = rule
+            try:
+                # 使用正则表达式从头开始匹配
+                match = re.match(path_prefix_pattern, sub_path)
+                if match:
+                    # 获取匹配的长度
+                    match_length = len(match.group(0))
+                    # 选择匹配长度最长的规则
+                    if match_length > best_match_length:
+                        best = rule
+                        best_match_length = match_length
+            except re.error:
+                # 如果正则表达式有错误，跳过这个规则
+                continue
+                
         return best
 
 

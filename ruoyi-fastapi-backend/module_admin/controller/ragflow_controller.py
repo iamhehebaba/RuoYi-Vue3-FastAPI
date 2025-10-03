@@ -36,55 +36,55 @@ from module_admin.controller.proxy_controller import ProxyRule, ProxyRuleHandler
 RAGFLOW_RULES: List[ProxyRule] = [
     # model apis
     {
-        "path_prefix": "/v1/llm/factories",
+        "path_prefix": "\/v1\/llm\/factories",
         "method": "GET",
         "permission": "model:model:add",
         "perm_strict": False,
         "description": "list all LLM providers"
     },
     {
-        "path_prefix": "/v1/llm/my_llms",
+        "path_prefix": "\/v1\/llm\/my_llms",
         "method": "GET",
         "permission": ["model:model:add", "model:model:list", "model:model:remove", "model:model:config"],
         "perm_strict": False,  # 非严格模式，满足任一权限即可
         "description": "list my currently added LLMs"
     },
     {
-        "path_prefix": "/v1/llm/delete_llm",
+        "path_prefix": "\/v1\/llm\/delete_llm",
         "method": "POST",
         "permission": "model:model:remove",
         "perm_strict": False,
         "description": "delete one LLM from my currently added LLMs"
     },
     {
-        "path_prefix": "/v1/llm/set_api_key",
+        "path_prefix": "\/v1\/llm\/set_api_key",
         "method": "POST",
         "permission": "model:model:add",
         "perm_strict": False,
         "description": "set the API key to add new LLM"
     },
     {
-        "path_prefix": "/v1/llm/list",
+        "path_prefix": "\/v1\/llm\/list",
         "method": "GET",
         "description": "list all LLMs for setting default LLMs"
     },    
 
     # kb apis
     {
-        "path_prefix": "/v1/kb/list",   # anyone can list his own kb
+        "path_prefix": "\/v1\/kb\/list",   # anyone can list his own kb
         "method": "POST",
         "descriptioni": "list all kbs for current user based on his role assignments",
         "post_processor": RagflowKbService.filter_ragflow_kb_by_permission
     },    
     {
-        "path_prefix": "/v1/kb/create",
+        "path_prefix": "\/v1\/kb\/create",
         "method": "POST",
         "permission": "kb:kb:add",      # must have the "add kb" permission
         "description": "create a new kb",
         "post_processor": RagflowKbService.post_process_create_kb,
     },
     {
-        "path_prefix": "/v1/kb/update",
+        "path_prefix": "\/v1\/kb\/update",
         "method": "POST",
         "permission": ["kb:kb:edit", "kb:kb:add"],      # must have the "edit kb" or "add kb" permission
         "perm_strict": False,
@@ -94,7 +94,7 @@ RAGFLOW_RULES: List[ProxyRule] = [
 
     # document apis
     {
-        "path_prefix": "/v1/document/list",
+        "path_prefix": "\/v1\/document\/list",
         "method": "GET",
         "permission": ["kb:doc:list"],
         "description": "list documents in a kb",
@@ -103,7 +103,7 @@ RAGFLOW_RULES: List[ProxyRule] = [
     },
 
     {
-        "path_prefix": "/v1/document/upload",
+        "path_prefix": "\/v1\/document\/upload",
         "method": "POST",
         "permission": ["kb:doc:add"],
         "description": "upload a document to a kb",
@@ -111,14 +111,14 @@ RAGFLOW_RULES: List[ProxyRule] = [
         "straight_forward": True,
     },
     {
-        "path_prefix": "/v1/document/run",
+        "path_prefix": "\/v1\/document\/run",
         "method": "POST",
         "permission": ["kb:doc:add"],
         "description": "parse documents",
         "straight_forward": True,
     },
     {
-        "path_prefix": "/v1/document/rm",
+        "path_prefix": "\/v1\/document\/rm",
         "method": "POST",
         "permission": ["kb:doc:delete"],
         "description": "remove documents",
@@ -128,20 +128,20 @@ RAGFLOW_RULES: List[ProxyRule] = [
 
     # tenant apis
     {
-        "path_prefix": "/v1/tenant/list",   # anyone can list his tenants(one user may belong to multiple tenants)
+        "path_prefix": "\/v1\/tenant\/list",   # anyone can list his tenants(one user may belong to multiple tenants)
         "method": "GET",
         "description": "list all tenants for current user"
     },
 
     # user apis
     {
-        "path_prefix": "/v1/user/set_tenant_info",
+        "path_prefix": "\/v1\/user\/set_tenant_info",
         "method": "POST",
         "permission": "model:model:config",
         "description": "set the default LLMs for current tenant"
     },    
     {
-        "path_prefix": "/v1/user/tenant_info",
+        "path_prefix": "\/v1\/user\/tenant_info",
         "method": "GET",
         "permission": ["model:model:add", "model:model:list", "model:model:remove", "model:model:config"],
         "description": "list all default LLMs for current tenant"
