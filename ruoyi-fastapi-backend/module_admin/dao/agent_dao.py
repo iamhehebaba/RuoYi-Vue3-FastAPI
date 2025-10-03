@@ -51,9 +51,9 @@ class AgentDao:
                 await db.execute(
                     select(SysAgent)
                     .where(
-                        SysAgent.graph_id == agent_query.graph_id if agent_query.graph_id is not None else True,
-                        SysAgent.status == agent_query.status if agent_query.status else True,
-                        SysAgent.name.like(f'%{agent_query.name}%') if agent_query.name else True,
+                        SysAgent.graph_id == agent_query.graph_id if agent_query and agent_query.graph_id is not None else True,
+                        SysAgent.status == agent_query.status if agent_query and agent_query.status else True,
+                        SysAgent.name.like(f'%{agent_query.name}%') if agent_query and agent_query.name else True,
                         eval(agent_scope_sql),
                     )
                     .order_by(SysAgent.order_num)
@@ -67,7 +67,7 @@ class AgentDao:
         return agent_result
 
     @classmethod
-    async def get_agents_by_role_ids(cls, db: AsyncSession, role_ids: List[int], request: AgentQueryModel):
+    async def get_agents_by_role_ids(cls, db: AsyncSession, role_ids: List[int]) -> List[SysAgent]:
         """
         根据角色ID列表和搜索请求获取智能体列表
 
@@ -82,15 +82,8 @@ class AgentDao:
             SysRoleAgent.role_id.in_(role_ids)
         )
         
-        # 如果指定了graph_id，添加过滤条件
-        if request.graph_id:
-            query = query.where(SysAgent.graph_id == request.graph_id)
-        
         # 按名称排序
         query = query.order_by(SysAgent.name)
-        
-        # 分页处理：使用offset和limit
-        query = query.offset(request.offset).limit(request.limit)
         
         agent_result = (await db.execute(query)).scalars().all()
         return agent_result
