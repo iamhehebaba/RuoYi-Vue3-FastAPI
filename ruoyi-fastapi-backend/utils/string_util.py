@@ -1,3 +1,4 @@
+import re
 from typing import Dict, List
 from config.constant import CommonConstant
 
@@ -168,3 +169,21 @@ class StringUtil:
                 return v
         
         return ''
+
+    @classmethod
+    def extract_regex_group(cls, pattern: str, text: str, group_index: int) -> str:
+        """
+        根据正则表达式和分组索引提取匹配的字符串
+
+        :param pattern: 正则表达式，如"/threads/(.*)/runs/(.*)"
+        :param text: 要匹配的字符串，如"/threads/abcd/runs/efgh"
+        :param group_index: 分组索引值
+        :return: 匹配的分组字符串，如果匹配失败或索引超出范围则返回空字符串
+        """
+        try:
+            match = re.match(pattern, text)
+            if match and group_index <= len(match.groups()):
+                return match.group(group_index)
+            return ''
+        except (re.error, IndexError, AttributeError):
+            return ''

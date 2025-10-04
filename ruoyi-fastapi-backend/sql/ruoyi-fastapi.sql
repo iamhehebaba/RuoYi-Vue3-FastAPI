@@ -785,6 +785,7 @@ create table langgraph_thread (
   thread_id         varchar(100)    not null                   comment 'langgraph的thread_id，UUID字符串',
   graph_id          varchar(100)    not null                   comment 'langgraph的graph_id，UUID字符串',
   assistant_id      varchar(100)                               comment 'langgraph的assistant_id，UUID字符串',
+  user_id           bigint(20)                                 comment '创建者user_id',
   created_by        varchar(64)     default 'admin'            comment '创建者',
   created_at        datetime                                   comment '创建时间',
   primary key (thread_id)

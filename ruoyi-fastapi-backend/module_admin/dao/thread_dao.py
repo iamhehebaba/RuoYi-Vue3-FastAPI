@@ -53,18 +53,17 @@ class ThreadDao:
         return threads
 
     @classmethod
-    async def get_threads_by_user(cls, db: AsyncSession, created_by: str):
+    async def get_threads_by_user(cls, db: AsyncSession, user_id: int):
         """
-        根据创建者获取thread列表
+        根据用户ID获取thread列表
 
         :param db: orm对象
-        :param created_by: 创建者
+        :param user_id: 用户ID
         :return: thread列表
         """
         threads = (await db.execute(
             select(LanggraphThread)
-            .where(LanggraphThread.created_by == created_by)
-            .order_by(LanggraphThread.created_at.desc())
+            .where(LanggraphThread.user_id == user_id)
         )).scalars().all()
         return threads
 
