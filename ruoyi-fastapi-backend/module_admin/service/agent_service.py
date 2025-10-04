@@ -132,24 +132,6 @@ class AgentService:
             raise e
 
     @classmethod
-    async def validate_agent_access(cls, db: AsyncSession, graph_id: str, role_ids: List[int]) -> bool:
-        """
-        验证用户是否有权限访问指定的智能体
-
-        :param db: orm对象
-        :param graph_id: 智能体graph_id
-        :param role_ids: 用户角色ID列表
-        :return: 是否有权限访问
-        """
-        try:
-            # 调用DAO层的验证方法
-            return await AgentDao.validate_agent_access_dao(db, graph_id, role_ids)
-            
-        except Exception as e:
-            logger.error(f"验证智能体访问权限失败: {e}")
-            return False
-
-    @classmethod
     async def check_user_agent_scope_services(cls, query_db: AsyncSession, current_user: CurrentUserModel, target_agent_id_list: List[str]):
         """
         校验当前用户是否对于指定的智能体有操作权限
@@ -160,17 +142,11 @@ class AgentService:
         :return: 校验结果
         """
         # 校验目标智能体是否存在
-        all_agent_list = await AgentService.get_agent_list_service(query_db, AgentQueryModel(), '1==1')
-        if not set(target_agent_id_list).issubset(set([agent['graphId'] for agent in all_agent_list])):
-            raise ServiceException(message='指定的智能体不存在')
-
-        if current_user.user.admin:
-            return
         if not set(target_agent_id_list).issubset(set(current_user.user.agent_ids)):
             raise PermissionException(data='', message=f'当前用户没有权限访问所有的智能体:{target_agent_id_list}')
                 
     @classmethod
-    async def post_process_agent_search(
+    async def filter_agent_by_permission(
         cls, 
         full_path: str, 
         request: Request,     

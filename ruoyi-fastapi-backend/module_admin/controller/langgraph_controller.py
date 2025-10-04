@@ -17,6 +17,7 @@ from utils.log_util import logger
 from config.env import RagflowConfig
 from module_admin.controller.proxy_controller import ProxyRule, ProxyRuleHandler
 from module_admin.service.agent_service import AgentService
+from module_admin.service.thread_service import ThreadService
 """
 基于 URL Path 的权限校验 + Langgraph API 转发
 
@@ -39,25 +40,29 @@ LANGGRAPH_RULES: List[ProxyRule] = [
         "straight_forward": True,
         "permission": ["system:role:add", "system:role:edit"],
         "perm_strict": False,
-        "post_processor": AgentService.post_process_agent_search,
+        "post_processor": AgentService.filter_agent_by_permission,
         "description": "search assistants"
     },       
     {
         "path_prefix": "\/threads",
         "method": "POST",
         "straight_forward": True,
+        "pre_processor": ThreadService.validate_thread_metadata,
+        "post_processor": ThreadService.connect_thread_with_agent,
         "description": "create a thread"
     },
     {
-        "path_prefix": "\/threads/search",
+        "path_prefix": "\/threads\/search",
         "method": "POST",
         "straight_forward": True,
+        "pre_processor": ThreadService.validate_thread_metadata,
         "description": "search threads"
     },    
     {
         "path_prefix": "\/threads\/.*\/runs",
         "method": "POST",
         "straight_forward": True,
+        "pre_processor": ThreadService.validate_thread_permission,
         "description": "create a run"
     },   
     {
