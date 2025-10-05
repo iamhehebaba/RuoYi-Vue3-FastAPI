@@ -40,61 +40,64 @@ LANGGRAPH_RULES: List[ProxyRule] = [
         "straight_forward": True,
         "permission": ["system:role:add", "system:role:edit"],
         "perm_strict": False,
-        "post_processor": AgentService.filter_agent_by_permission,
+        "post_processor": [AgentService.filter_agent_by_permission],
         "description": "search assistants"
     },       
     {
         "path_prefix": "\/threads",
         "method": "POST",
         "straight_forward": True,
-        "pre_processor": ThreadService.validate_thread_metadata,
-        "post_processor": ThreadService.connect_thread_with_agent,
+        "pre_processor": [ThreadService.validate_thread_metadata],
+        "post_processor": [ThreadService.connect_thread_with_agent],
         "description": "create a thread"
     },
     {
         "path_prefix": "\/threads\/search",
         "method": "POST",
         "straight_forward": True,
-        "pre_processor": ThreadService.validate_thread_metadata,
+        "pre_processor": [ThreadService.validate_thread_metadata],
         "description": "search threads"
     },    
     {
         "path_prefix": "\/threads\/.*\/runs",
         "method": "POST",
         "straight_forward": True,
-        "pre_processor": ThreadService.validate_thread_permission,
+        "pre_processor": [ThreadService.validate_thread_permission, ThreadService.refresh_llm_config],
         "description": "create a run"
     },   
     {
         "path_prefix": "\/threads\/.*\/runs\/stream",
         "method": "POST",
         "straight_forward": True,
+        "stream_mode": True,
+        "pre_processor": [ThreadService.validate_thread_permission, ThreadService.refresh_llm_config],
         "description": "create a run in stream mode"
     },   
     {
         "path_prefix": "\/threads\/.*\/runs\/.*",
         "method": "GET",
         "straight_forward": True,
+        "pre_processor": [ThreadService.validate_thread_permission],
         "description": "get a run, including its status"
     },   
     {
         "path_prefix": "\/threads\/.*\/runs\/.*/join",
         "method": "GET",
         "straight_forward": True,
+        "pre_processor": [ThreadService.validate_thread_permission],
         "description": "wait and get a run's result"
     },       
     {
         "path_prefix": "\/threads\/.*\/history",
         "method": "POST",
         "straight_forward": True,
-        "description": "wait and get a run's result"
+        "pre_processor": [ThreadService.validate_thread_permission],
+        "description": "get a thread's history"
     },           
 ]    
 
 langgraphController = APIRouter(prefix="/proxy/langgraph", tags=["Langgraph API"])
 langgraph_rule_handler = ProxyRuleHandler(LANGGRAPH_RULES, langgraph_client)
-
-
 
 @langgraphController.api_route(
     "/{full_path:path}",

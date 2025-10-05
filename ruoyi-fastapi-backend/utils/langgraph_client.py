@@ -4,7 +4,8 @@ import json
 from loguru import logger
 import asyncio
 import re
-from typing import Optional, Dict, Any
+import httpx
+from typing import Optional, Dict, Any, AsyncGenerator
 from datetime import datetime
 
 from config.env import LanggraphConfig
@@ -17,6 +18,7 @@ class LanggraphClient:
     def __init__(self):
         self.base_url = LanggraphConfig.langgraph_api_url
         self.session = requests.Session()
+        self.headers = {"Content-Type": "application/json"}
         self.session.timeout = 30
         
     async def _make_request(self, method: str, path: str, **kwargs) -> requests.Response:
@@ -131,6 +133,54 @@ class LanggraphClient:
             logger.error(f"langgraph 原始请求转发过程中发生错误: {e}")
             raise e
 
+    async def post_stream(self, path: str, headers: dict = None, body: bytes = None, **kwargs) -> AsyncGenerator[str, None]:
+        """
+        发送POST流式请求
+        
+        :param path: API路径
+        :param headers: 额外的请求头
+        :param body: 原始请求体
+        :param kwargs: 其他请求参数
+        :return: 异步生成器，逐行yield流式响应数据
+        """
+        url = f"{self.base_url}{path}"
+        
+        try:
+            async with httpx.AsyncClient(timeout=30) as client:
+
+                request_headers = headers.copy() if headers else {}
+
+                # 合并默认headers和传入的headers
+                if 'headers' in kwargs:
+                    request_headers.update(kwargs.pop('headers'))
+                
+                # 设置流式请求的Accept头
+                request_headers["Accept"] = "text/event-stream"
+                async with client.stream(
+                    method="POST",
+                    url=url,
+                    headers=request_headers,
+                    data=body,
+                    **kwargs
+                ) as response:
+                    if response.status_code != 200:
+                        logger.error(f"调用langgraph_api流式请求失败: {response.status_code}")
+                        raise Exception(f"调用langgraph_api流式请求失败: {response.status_code}")
+                    
+                    async for chunk in response.aiter_text():
+                        if chunk.strip():  # 过滤空行
+                            yield chunk
+                            
+        except httpx.TimeoutException as e:
+            logger.error("调用langgraph_api流式请求超时")
+            raise e
+        except httpx.RequestError as e:
+            logger.error(f"调用langgraph_api流式请求错误: {e}")
+            raise e
+        except Exception as e:
+            logger.error(f"调用langgraph_api流式请求失败: {e}")
+            raise e
+    
 
 # 创建全局实例
 langgraph_client = LanggraphClient()
