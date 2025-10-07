@@ -411,7 +411,7 @@ class ThreadService:
         :return: 校验结果
         """
 
-        thread_id = StringUtil.extract_regex_group(".*threads/(.*)/runs.*", full_path, 1)
+        thread_id = StringUtil.extract_regex_group(".*threads/(.*)/(runs|history).*", full_path, 1)
 
         threads_for_current_user = await cls.get_threads_for_current_user(query_db, current_user)
         thread_ids_for_current_user = [thread.thread_id for thread in threads_for_current_user]
@@ -420,19 +420,31 @@ class ThreadService:
             logger.error(f"当前用户没有权限访问thread_id为{thread_id}的thread")
             raise PermissionException(f"当前用户没有权限访问thread_id为{thread_id}的thread")
 
-        async for db in get_db_ragflow():
-            await cls.refresh_llm_config(request, body, db)
+        # async for db in get_db_ragflow():
+        #     await cls.refresh_llm_config(request, body, db)
 
 
     @classmethod
-    async def refresh_llm_config(cls, request: Request, body: Any, db_ragflow: AsyncSession):
+    async def refresh_llm_config(
+        cls, 
+        full_path: str, 
+        request: Request,     
+        query_db: AsyncSession,
+        current_user: CurrentUserModel,    
+        data_scope_sql: str,
+        body: Any) -> Any:
         """
-        从body.config中提取并添加LLM配置信息
-        
-        Args:
-            run_request: 运行请求对象
-            db_ragflow: 数据库会话
+        校验当前用户对于指定的thread是否有权限
+
+        :param full_path: 知识库路径
+        :param request: 请求对象
+        :param query_db: orm对象
+        :param current_user: 当前用户
+        :param data_scope_sql: 数据权限SQL
+        :param body: 请求体
+        :return: 校验结果
         """
+
         payload = None
         if body:
             try:
@@ -450,19 +462,21 @@ class ThreadService:
             
             if chat_llm_factory and chat_llm_name:
                 try:
+
                     # 调用RagflowTenantLLMService查询LLM配置
-                    llm_config = await RagflowTenantLLMService.get_ragflow_tenant_llm_by_key_service(
-                        db_ragflow, chat_llm_factory, chat_llm_name
-                    )
+                    async for db in get_db_ragflow():
+                        llm_config = await RagflowTenantLLMService.get_ragflow_tenant_llm_by_key_service(
+                            db, chat_llm_factory, chat_llm_name
+                        )
                     
-                    if llm_config:
-                        # refresh api_base_url & api_key in redis
-                        redis_client = request.app.state.redis
-                        await redis_client.set(ThreadService.REDIS_KEY_CHAT_LLM_API_BASE_URL, llm_config.api_base if llm_config.api_base else '')
-                        await redis_client.set(ThreadService.REDIS_KEY_CHAT_LLM_API_KEY, llm_config.api_key if llm_config.api_key else '')          
-                        logger.info(f"成功刷新LLM配置: {chat_llm_factory}/{chat_llm_name}")
-                    else:
-                        logger.warning(f"未找到LLM配置: {chat_llm_factory}/{chat_llm_name}")
+                        if llm_config:
+                            # refresh api_base_url & api_key in redis
+                            redis_client = request.app.state.redis
+                            await redis_client.set(ThreadService.REDIS_KEY_CHAT_LLM_API_BASE_URL, llm_config.api_base if llm_config.api_base else '')
+                            await redis_client.set(ThreadService.REDIS_KEY_CHAT_LLM_API_KEY, llm_config.api_key if llm_config.api_key else '')          
+                            logger.info(f"成功刷新LLM配置: {chat_llm_factory}/{chat_llm_name}")
+                        else:
+                            logger.warning(f"未找到LLM配置: {chat_llm_factory}/{chat_llm_name}")
                         
                 except Exception as e:
                     logger.error(f"查询LLM配置失败: {str(e)}")

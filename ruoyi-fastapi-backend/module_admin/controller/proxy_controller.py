@@ -2,7 +2,7 @@ import re
 from typing import Any, Dict, List, Optional, Union, Callable, Awaitable
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends, Request, Response
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from module_admin.aspect.data_scope import GetDataScope
 
 from config.get_db import get_db
@@ -19,12 +19,13 @@ class ProxyRule(Dict[str, Any]):
     path_prefix: str  # 要匹配的前缀（相对于 /ragflow_model 的子路径，例如 /v1/llm/factories）
     method: str  # HTTP方法
     straight_forward: Optional[bool] = False  # 是否直接转发而没有任何分析处理
+    stream_mode: Optional[bool] = False # 是否以流模式转发
     permission: Optional[Union[str, List[str]]]  # 需要的权限标识（字符串或列表）
     perm_strict: Optional[bool] = False # 权限为列表时是否要求全部满足
     upstream_path: Optional[str]  # 如果有值，则使用此路径替换path_prefix的值
     description: Optional[str] # 描述信息
-    pre_processor: Optional[Callable[[str, Request, AsyncSession, CurrentUserModel, str, Any], Awaitable[Any]]]  # 前处理函数
-    post_processor: Optional[Callable[[str, Request, AsyncSession, CurrentUserModel, str, Any], Awaitable[Any]]]  # 后处理函数
+    pre_processor: Optional[List[Callable[[str, Request, AsyncSession, CurrentUserModel, str, Any], Awaitable[Any]]]]  # 前处理函数
+    post_processor: Optional[List[Callable[[str, Request, AsyncSession, CurrentUserModel, str, Any], Awaitable[Any]]]]  # 后处理函数
 
 class ProxyRuleHandler:
     """
@@ -131,32 +132,48 @@ class ProxyRuleHandler:
         body = await request.body()
 
         if rule.get("pre_processor"):
-            await rule["pre_processor"](
-                full_path, request, query_db, current_user, data_scope_sql, body
-            )
+            for pre_processor in rule["pre_processor"]:
+                await pre_processor(
+                    full_path, request, query_db, current_user, data_scope_sql, body
+                )
+
+        # 获取原始请求头（排除一些不需要转发的头）
+        original_headers = dict(request.headers)
+        # 移除一些不应该转发的头
+        headers_to_remove = ['host', 'content-length', 'authorization']
+        for header in headers_to_remove:
+            original_headers.pop(header, None)
 
         # 检查是否为通配符规则，如果是则直接转发原始请求
         if rule.get("straight_forward"):
-            # 直接转发原始请求，不解析和重构参数
-            
-            query_params = dict(request.query_params)
-            
-            # 获取原始请求头（排除一些不需要转发的头）
-            original_headers = dict(request.headers)
-            # 移除一些不应该转发的头
-            headers_to_remove = ['host', 'content-length', 'authorization']
-            for header in headers_to_remove:
-                original_headers.pop(header, None)
-            
-            # 检查是否为form data请求，确保Content-Type头被正确传递
-            content_type = request.headers.get('content-type', '')
-            if content_type:
-                # 保留Content-Type头以支持form data转发
-                original_headers['content-type'] = content_type
-            
-            response_data = await self.proxy_client.forward_raw_request(
-                actual_path, method, query_params, body, original_headers
-            )
+            if rule.get("stream_mode"):
+                # 直接将AsyncGenerator传递给StreamingResponse
+                stream_generator = self.proxy_client.post_stream(actual_path, original_headers,body)
+                return StreamingResponse(
+                    stream_generator,
+                    media_type="text/event-stream",
+                    headers={
+                        "Cache-Control": "no-cache",
+                        "Connection": "keep-alive",
+                        "Access-Control-Allow-Origin": "*",
+                        "Access-Control-Allow-Headers": "*"
+                    }
+                )
+            else:
+                # 直接转发原始请求，不解析和重构参数        
+                query_params = dict(request.query_params)
+                
+
+                
+                # 检查是否为form data请求，确保Content-Type头被正确传递
+                content_type = request.headers.get('content-type', '')
+                if content_type:
+                    # 保留Content-Type头以支持form data转发
+                    original_headers['content-type'] = content_type
+                
+                response_data = await self.proxy_client.forward_raw_request(
+                    actual_path, method, query_params, body, original_headers
+                )
         else:
             # 原有的处理逻辑：解析请求参数并重构
             # 提取请求信息
@@ -193,9 +210,10 @@ class ProxyRuleHandler:
         
         # 如果配置了后处理函数，则调用进行后处理
         if rule.get("post_processor"):
-            response_data = await rule["post_processor"](
-                full_path, request, query_db, current_user, data_scope_sql, response_data
-            )
+            for post_processor in rule["post_processor"]:
+                response_data = await post_processor(
+                    full_path, request, query_db, current_user, data_scope_sql, response_data
+                )
         
         # 返回响应
         return JSONResponse(

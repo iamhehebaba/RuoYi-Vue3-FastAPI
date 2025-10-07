@@ -74,14 +74,14 @@ RAGFLOW_RULES: List[ProxyRule] = [
         "path_prefix": "\/v1\/kb\/list",   # anyone can list his own kb
         "method": "POST",
         "descriptioni": "list all kbs for current user based on his role assignments",
-        "post_processor": RagflowKbService.filter_ragflow_kb_by_permission
+        "post_processor": [RagflowKbService.filter_ragflow_kb_by_permission],
     },    
     {
         "path_prefix": "\/v1\/kb\/create",
         "method": "POST",
         "permission": "kb:kb:add",      # must have the "add kb" permission
         "description": "create a new kb",
-        "post_processor": RagflowKbService.post_process_create_kb,
+        "post_processor": [RagflowKbService.post_process_create_kb],
     },
     {
         "path_prefix": "\/v1\/kb\/update",
@@ -89,8 +89,16 @@ RAGFLOW_RULES: List[ProxyRule] = [
         "permission": ["kb:kb:edit", "kb:kb:add"],      # must have the "edit kb" or "add kb" permission
         "perm_strict": False,
         "description": "update a kb configuration",
-        "pre_processor": RagflowKbService.check_ragflow_kb_permission,
+        "pre_processor": [RagflowKbService.check_ragflow_kb_permission],
     },
+    {
+        "path_prefix": "\/v1\/kb\/rm",
+        "method": "POST",
+        "permission": "kb:kb:rm",      # must have the "rm kb" permission
+        "perm_strict": False,
+        "description": "remove a kb",
+        "pre_processor": [RagflowKbService.check_ragflow_kb_permission],
+    },    
 
     # document apis
     {
@@ -98,7 +106,7 @@ RAGFLOW_RULES: List[ProxyRule] = [
         "method": "GET",
         "permission": ["kb:doc:list"],
         "description": "list documents in a kb",
-        "pre_processor": RagflowKbService.check_ragflow_kb_permission,
+        "pre_processor": [RagflowKbService.check_ragflow_kb_permission],
         "straight_forward": True,
     },
 
@@ -107,7 +115,7 @@ RAGFLOW_RULES: List[ProxyRule] = [
         "method": "POST",
         "permission": ["kb:doc:add"],
         "description": "upload a document to a kb",
-        "pre_processor": RagflowKbService.check_ragflow_kb_permission,
+        "pre_processor": [RagflowKbService.check_ragflow_kb_permission],
         "straight_forward": True,
     },
     {
