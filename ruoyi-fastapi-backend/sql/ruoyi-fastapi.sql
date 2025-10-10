@@ -761,7 +761,8 @@ create table sys_agent (
 
 insert into sys_agent values('general_chatbot', '', '通用聊天智能体', '通用聊天智能体', '通用聊天智能体', 'admin', '0', 1, sysdate());
 insert into sys_agent values('ppt_master', '', 'PPT大师', 'PPT大师', 'PPT大师', 'admin', '0', 2, sysdate());
-
+insert into sys_agent values('doc_retriever', '', '文档检索智能体', '文档检索智能体', '文档检索智能体', 'admin', '0', 3, sysdate());
+insert into sys_agent values('company_researcher', '', '公司研报智能体', '公司研报智能体', '公司研报智能体', 'admin', '0', 4, sysdate());
 
 -- ----------------------------
 -- 21、角色和智能体关联表
@@ -774,7 +775,8 @@ create table sys_role_agent (
 ) engine=innodb comment = '角色和智能体关联表';
 
 insert into sys_role_agent values(2, 'general_chatbot');
-insert into sys_role_agent values(2, 'ppt_master');
+insert into sys_role_agent values(2, 'doc_retriever');
+insert into sys_role_agent values(2, 'company_researcher');
 
 
 -- ----------------------------
