@@ -1103,6 +1103,8 @@ comment on table sys_agent is '智能体表';
 
 insert into sys_agent values('general_chatbot', '', '通用聊天智能体', '通用聊天智能体', '通用聊天智能体', 'admin', '0', 1, current_timestamp);
 insert into sys_agent values('ppt_master', '', 'PPT大师', 'PPT大师', 'PPT大师', 'admin', '0', 2, current_timestamp);
+insert into sys_agent values('doc_retriever', '', '文档检索智能体', '文档检索智能体', '文档检索智能体', 'admin', '0', 3, current_timestamp);
+insert into sys_agent values('company_researcher', '', '公司研报智能体', '公司研报智能体', '公司研报智能体', 'admin', '0', 4, current_timestamp);       
 
 
 -- ----------------------------
@@ -1119,8 +1121,8 @@ comment on column sys_role_agent.graph_id is '智能体graph_id';
 comment on table sys_role_agent is '角色和智能体关联表';
 
 insert into sys_role_agent values(2, 'general_chatbot');
-insert into sys_role_agent values(2, 'ppt_master');
-
+insert into sys_role_agent values(2, 'doc_retriever');
+insert into sys_role_agent values(2, 'company_researcher');
 
 -- ----------------------------
 -- 22、langgraph thread表

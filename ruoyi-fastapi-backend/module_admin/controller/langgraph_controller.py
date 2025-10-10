@@ -47,7 +47,7 @@ LANGGRAPH_RULES: List[ProxyRule] = [
         "path_prefix": "\/threads",
         "method": "POST",
         "straight_forward": True,
-        "pre_processor": [ThreadService.validate_thread_metadata],
+        "pre_processor": [ThreadService.validate_metadata_for_thread_creation],
         "post_processor": [ThreadService.connect_thread_with_agent],
         "description": "create a thread"
     },
@@ -55,7 +55,7 @@ LANGGRAPH_RULES: List[ProxyRule] = [
         "path_prefix": "\/threads\/search",
         "method": "POST",
         "straight_forward": True,
-        "pre_processor": [ThreadService.validate_thread_metadata],
+        "pre_processor": [ThreadService.validate_metadata_for_thread_search],
         "description": "search threads"
     },    
     {
