@@ -1,4 +1,4 @@
-from sqlalchemy import bindparam, func, or_, select, update  # noqa: F401
+from sqlalchemy import bindparam, func, or_, select, update, delete  # noqa: F401
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 from module_admin.entity.do.langgraphthread_do import LanggraphThread
@@ -35,6 +35,18 @@ class ThreadDao:
         # await db.flush()  # 确保对象在Session中持久化
         # await db.refresh(thread)
         return thread
+
+    @classmethod
+    async def delete_thread_by_id(cls, db: AsyncSession, thread_id: str) -> bool:
+        """
+        根据thread_id删除thread记录
+
+        :param db: orm对象
+        :param thread_id: thread ID
+        :return: 删除是否成功
+        """
+        result = await db.execute(delete(LanggraphThread).where(LanggraphThread.thread_id == thread_id))
+        return result.rowcount > 0
 
     @classmethod
     async def get_threads_by_graph_id(cls, db: AsyncSession, graph_id: str):

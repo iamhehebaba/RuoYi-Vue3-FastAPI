@@ -9,13 +9,11 @@ from utils.langgraph_util import LanggraphApiClient
 from utils.common_util import CamelCaseUtil
 from utils.log_util import logger
 from utils.string_util import StringUtil
-from exceptions.exception import ModelValidatorException, ServiceException
+from exceptions.exception import ModelValidatorException, ServiceException, PermissionException
 from module_admin.entity.vo.user_vo import CurrentUserModel
 from module_admin.service.agent_service import AgentService
 from module_admin.service.ragflow_tenant_llm_service import RagflowTenantLLMService
 from config.get_db import get_db_ragflow
-
-
 
 import httpx
 
@@ -120,6 +118,48 @@ class ThreadService:
         except Exception as e:
             logger.error(f"根据当前用户获取thread列表失败: {e}")
             raise e
+
+    @classmethod
+    async def delete_thread_by_id(
+        cls, 
+        full_path: str, 
+        request: Request,     
+        query_db: AsyncSession,
+        current_user: CurrentUserModel,    
+        data_scope_sql: str,
+        payload: Any) -> Any:
+        """
+        从数据库中删除thread记录
+        
+        :param full_path: delete thread url path
+        :param request: 请求对象
+        :param query_db: orm对象
+        :param current_user: 当前用户
+        :param data_scope_sql: 数据权限SQL
+        :param payload: delete thread response
+        :return: 原来的payload
+        """        
+
+        try:
+            thread_id = StringUtil.extract_regex_group(".*threads/(.*)", full_path, 1)
+            if not thread_id:
+                logger.error(f"从URL中提取thread_id失败: {full_path}")
+                raise ServiceException(f"从URL中提取thread_id失败: {full_path}")
+            
+            # 4. 删除数据库记录
+            delete_success = await ThreadDao.delete_thread_by_id(query_db, thread_id)
+            if not delete_success:
+                query_db.rollback()
+                logger.error(f"删除thread记录失败: {thread_id}")
+                raise ServiceException(f"删除thread记录失败: {thread_id}")
+            else:
+                await query_db.commit()
+                return payload
+                
+        except Exception as e:
+            await query_db.rollback()
+            logger.error(f"删除thread失败: {e}")
+            raise ServiceException(f"删除thread失败: {str(e)}")
 
     @classmethod
     async def create_run_service(cls, thread_id: str, request: RunCreateModel) -> Dict[str, Any]:
@@ -455,6 +495,8 @@ class ThreadService:
         """
 
         thread_id = StringUtil.extract_regex_group(".*threads/(.*)/(runs|history).*", full_path, 1)
+        if not thread_id:
+            thread_id = StringUtil.extract_regex_group(".*threads/(.*)", full_path, 1)
 
         threads_for_current_user = await cls.get_threads_for_current_user(query_db, current_user)
         thread_ids_for_current_user = [thread.thread_id for thread in threads_for_current_user]
@@ -462,10 +504,6 @@ class ThreadService:
         if thread_id not in thread_ids_for_current_user:
             logger.error(f"当前用户没有权限访问thread_id为{thread_id}的thread")
             raise PermissionException(f"当前用户没有权限访问thread_id为{thread_id}的thread")
-
-        # async for db in get_db_ragflow():
-        #     await cls.refresh_llm_config(request, body, db)
-
 
     @classmethod
     async def refresh_llm_config(

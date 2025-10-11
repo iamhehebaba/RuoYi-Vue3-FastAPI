@@ -2,6 +2,8 @@ import re
 from typing import Any, Dict, List, Optional, Union, Callable, Awaitable
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends, Request, Response
+from requests.models import Response as RequestsResponse
+
 from fastapi.responses import JSONResponse, StreamingResponse
 from module_admin.aspect.data_scope import GetDataScope
 
@@ -215,8 +217,12 @@ class ProxyRuleHandler:
                     full_path, request, query_db, current_user, data_scope_sql, response_data
                 )
         
-        # 返回响应
-        return JSONResponse(
-            status_code=200,
-            content=response_data
-        )
+        # 
+        # todo: return the response directly, not depending on the type again
+        if isinstance(response_data, RequestsResponse):
+            return response_data
+        else:
+            return JSONResponse(
+                status_code=200,
+                content=response_data
+            )

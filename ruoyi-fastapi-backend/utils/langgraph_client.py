@@ -125,10 +125,12 @@ class LanggraphClient:
             # 发送请求
             response = self.session.request(method.upper(), url, **kwargs)
             
-            api_response = response.json()
-            logger.info(f"langgraph 原始请求转发响应: {api_response}")
-            return api_response                
-            
+            if response.status_code < 400 and response.status_code != 204:
+                api_response = response.json()
+                logger.info(f"langgraph 原始请求转发响应: {api_response}")
+                return api_response                
+            else:
+                return response
         except Exception as e:
             logger.error(f"langgraph 原始请求转发过程中发生错误: {e}")
             raise e
