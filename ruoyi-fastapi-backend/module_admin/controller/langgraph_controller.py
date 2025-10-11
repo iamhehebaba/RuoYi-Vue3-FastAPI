@@ -52,6 +52,14 @@ LANGGRAPH_RULES: List[ProxyRule] = [
         "description": "create a thread"
     },
     {
+        "path_prefix": "\/threads\/.*",
+        "method": "DELETE",
+        "straight_forward": True,
+        "pre_processor": [ThreadService.validate_thread_permission],
+        "post_processor": [ThreadService.delete_thread_by_id],
+        "description": "delete a thread"
+    },    
+    {
         "path_prefix": "\/threads\/search",
         "method": "POST",
         "straight_forward": True,
