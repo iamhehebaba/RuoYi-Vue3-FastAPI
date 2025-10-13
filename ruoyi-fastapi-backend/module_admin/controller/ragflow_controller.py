@@ -57,6 +57,13 @@ RAGFLOW_RULES: List[ProxyRule] = [
         "description": "delete one LLM from my currently added LLMs"
     },
     {
+        "path_prefix": "\/v1\/llm\/delete_factory",
+        "method": "POST",
+        "permission": "model:model:remove",
+        "perm_strict": False,
+        "description": "delete one LLM factory(all LLMs under this factory will be deleted)"
+    },    
+    {
         "path_prefix": "\/v1\/llm\/set_api_key",
         "method": "POST",
         "permission": "model:model:add",
@@ -68,6 +75,13 @@ RAGFLOW_RULES: List[ProxyRule] = [
         "method": "GET",
         "description": "list all LLMs for setting default LLMs"
     },    
+    {
+        "path_prefix": "\/v1\/llm\/add_llm",
+        "method": "POST",
+        "permission": "model:model:add",
+        "perm_strict": False,
+        "description": "add a new LLM(for example, by Ollama reference engine)"
+    },
 
     # kb apis
     {
