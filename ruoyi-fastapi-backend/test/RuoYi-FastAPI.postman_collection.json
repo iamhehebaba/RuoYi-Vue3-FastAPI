@@ -336,6 +336,24 @@
 					"response": []
 				},
 				{
+					"name": "get a thread(raw langgraph)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/threads/{{thread_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"threads",
+								"{{thread_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "list thread(raw langgraph)",
 					"request": {
 						"auth": {
@@ -358,7 +376,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"select\": [\n        \"thread_id\",\n        \"status\",\n        \"created_at\"\n    ],\n    \"status\": \"idle\",\n    \"limit\": 1,\n    \"offset\": 0,\n    \"sort_by\": \"created_at\"\n}",
+							"raw": "{\n    \"metadata\": {\n        \"user_id\": \"galen\",\n        \"graph_id\": \"general_chatbot\"\n    },    \n    \"status\": \"idle\",\n    \"limit\": 10,\n    \"offset\": 0,\n    \"sort_by\": \"created_at\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -720,6 +738,565 @@
 								"threads",
 								"{{thread_id}}",
 								"history"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get role's agent",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/system/role/agent/allocatedList/2",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"system",
+								"role",
+								"agent",
+								"allocatedList",
+								"2"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Agent-proxy mode",
+			"item": [
+				{
+					"name": "search assistants",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful POST request\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+									"",
+									"    // 解析响应 body",
+									"    const response = pm.response.json();",
+									"",
+									"    // 提取 assistant_id",
+									"    const assistant_id = response[0].assistant_id;",
+									"",
+									"    console.log(assistant_id)",
+									"",
+									"    // 将 threadId 存储到环境变量",
+									"    pm.environment.set(\"assistant_id\", assistant_id);",
+									"",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{  \n    \"limit\": 100,  \n    \"offset\": 0  \n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/proxy/langgraph/assistants/search",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"proxy",
+								"langgraph",
+								"assistants",
+								"search"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create a thread",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful POST request\", function () {\r",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+									"\r",
+									"    // 解析响应 body\r",
+									"    const response = pm.response.json();\r",
+									"\r",
+									"    // 提取 threadId\r",
+									"    const thread_id = response.thread_id;\r",
+									"\r",
+									"    console.log(thread_id)\r",
+									"\r",
+									"    // 将 threadId 存储到环境变量\r",
+									"    pm.environment.set(\"thread_id\", thread_id);\r",
+									"\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{  \r\n    \"metadata\": {\r\n        \"user_id\": 1,\r\n        \"graph_id\": \"general_chatbot\"\r\n    }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/proxy/langgraph/threads",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"proxy",
+								"langgraph",
+								"threads"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "search threads",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"select\": [\n        \"thread_id\",\n        \"status\",\n        \"created_at\"\n    ],\n    \"metadata\": {\n        \"graph_id\": \"general_chatbot\",\n        \"user_id\": 1\n    },\n    \"status\": \"idle\",\n    \"limit\": 100,\n    \"offset\": 0,\n    \"sort_by\": \"updated_at\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/proxy/langgraph/threads/search",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"proxy",
+								"langgraph",
+								"threads",
+								"search"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create a run",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful POST request\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+									"",
+									"    // 解析响应 body",
+									"    const response = pm.response.json();",
+									"",
+									"    // 提取 run_id",
+									"    const run_id = response.run_id;",
+									"",
+									"    console.log(run_id)",
+									"",
+									"    // 将 threadId 存储到环境变量",
+									"    pm.environment.set(\"run_id\", run_id);",
+									"",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"assistant_id\": \"{{assistant_id}}\",\r\n    \"input\": {\r\n        \"user_id\": \"galen\",\r\n        \"query\": \"who is current us president?\",\r\n        \"dataset_ids\":[],\r\n        \"web_search_enabled\": true\r\n    },\r\n    \"config\": {\r\n        \"configurable\": {\r\n            \"chat_llm_factory\": \"Ollama\",\r\n            \"chat_llm_name\": \"codegeex4\"\r\n        }\r\n    }    \r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/proxy/langgraph/threads/{{thread_id}}/runs",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"proxy",
+								"langgraph",
+								"threads",
+								"{{thread_id}}",
+								"runs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create a run in stream mode",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful POST request\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+									"",
+									"    // 解析响应 body",
+									"    const response = pm.response.json();",
+									"",
+									"    // 提取 run_id",
+									"    const run_id = response.data.runId;",
+									"",
+									"    console.log(run_id)",
+									"",
+									"    // 将 threadId 存储到环境变量",
+									"    pm.environment.set(\"run_id\", run_id);",
+									"",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"assistant_id\": \"{{assistant_id}}\",\r\n    \"input\": {\r\n        \"user_id\": \"galen\",\r\n        \"query\": \"who is current us president?\",\r\n        \"web_search_enabled\": true,\r\n        \"dataset_ids\": [\r\n        ]\r\n    },\r\n    \"config\": {\r\n        \"configurable\": {\r\n            \"chat_llm_factory\": \"Ollama\",\r\n            \"chat_llm_name\": \"codegeex4\"\r\n        }\r\n    },    \r\n    \"stream_mode\": [\"messages\"]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/proxy/langgraph/threads/{{thread_id}}/runs/stream",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"proxy",
+								"langgraph",
+								"threads",
+								"{{thread_id}}",
+								"runs",
+								"stream"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get a run status",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/proxy/langgraph/threads/{{thread_id}}/runs/{{run_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"proxy",
+								"langgraph",
+								"threads",
+								"{{thread_id}}",
+								"runs",
+								"{{run_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get run result",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/proxy/langgraph/threads/{{thread_id}}/runs/{{run_id}}/join",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"proxy",
+								"langgraph",
+								"threads",
+								"{{thread_id}}",
+								"runs",
+								"{{run_id}}",
+								"join"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get thread history",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"limit\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/proxy/langgraph/threads/{{thread_id}}/history",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"proxy",
+								"langgraph",
+								"threads",
+								"{{thread_id}}",
+								"history"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete thread",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{baseUrl}}/proxy/langgraph/threads/{{thread_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"proxy",
+								"langgraph",
+								"threads",
+								"{{thread_id}}"
 							]
 						}
 					},
@@ -5038,12 +5615,195 @@
 								}
 							},
 							"response": []
+						},
+						{
+							"name": "add llm(ollama)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"model_type\": \"embedding\",\n    \"llm_name\": \"mxbai-embed-large\",\n    \"api_base\": \"http://10.100.100.35:11434\",\n    \"api_key\": \"sk-4f92c6a1f9d84a7b92a8e2e1c3d6f8b0\",\n    \"max_tokens\": 999999,\n    \"llm_factory\": \"Ollama\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/ragflow/v1/llm/add_llm",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"ragflow",
+										"v1",
+										"llm",
+										"add_llm"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "add llm(vLLM)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"model_type\": \"chat\",\n    \"llm_name\": \"codegeex4\",\n    \"api_base\": \"http://10.100.100.35:11434\",\n    \"api_key\": \"sk-4f92c6a1f9d84a7b92a8e2e1c3d6f8b0\",\n    \"max_tokens\": 999999,\n    \"llm_factory\": \"VLLM\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/ragflow/v1/llm/add_llm",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"ragflow",
+										"v1",
+										"llm",
+										"add_llm"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "delete LLM factory",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"model_type\": \"embedding\",\n    \"llm_name\": \"mxbai-embed-large\",\n    \"api_base\": \"http://10.100.100.35:11434\",\n    \"api_key\": \"sk-4f92c6a1f9d84a7b92a8e2e1c3d6f8b0\",\n    \"max_tokens\": 999999,\n    \"llm_factory\": \"Ollama\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/ragflow/v1/llm/add_llm",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"ragflow",
+										"v1",
+										"llm",
+										"add_llm"
+									]
+								}
+							},
+							"response": []
 						}
 					]
 				},
 				{
-					"name": "kb",
+					"name": "kb management",
 					"item": [
+						{
+							"name": "create a kb",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Successful POST request\", function () {",
+											"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+											"",
+											"    // 解析响应 body",
+											"    const response = pm.response.json();",
+											"",
+											"    // 提取 kb_id",
+											"    const kb_id = response.data.kb_id;",
+											"",
+											"    console.log(kb_id)",
+											"",
+											"    // 将 threadId 存储到环境变量",
+											"    pm.environment.set(\"kb_id\", kb_id);",
+											"",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"test\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/ragflow/v1/kb/create",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"ragflow",
+										"v1",
+										"kb",
+										"create"
+									]
+								}
+							},
+							"response": []
+						},
 						{
 							"name": "list kb",
 							"request": {
@@ -5100,7 +5860,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n}",
+									"raw": "{\n    \"kb_id\": \"{{kb_id}}\",\n    \"name\": \"debug_100501\",\n    \"avatar\": \"\",\n    \"description\": \"for debug purpose\",\n    \"permission\": \"me\",\n    \"parser_config\": {\n        \"layout_recognize\": \"DeepDOC\",\n        \"chunk_token_num\": 512,\n        \"delimiter\": \"\\n\",\n        \"auto_keywords\": 0,\n        \"auto_questions\": 0,\n        \"html4excel\": false,\n        \"raptor\": {\n            \"use_raptor\": false\n        },\n        \"graphrag\": {\n            \"use_graphrag\": false\n        }\n    },\n    \"embd_id\": \"mxbai-embed-large@Ollama\",\n    \"parser_id\": \"naive\",\n    \"pagerank\": 0\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -5108,7 +5868,7 @@
 									}
 								},
 								"url": {
-									"raw": "{{baseUrl}}/ragflow/v1/kb/list",
+									"raw": "{{baseUrl}}/ragflow/v1/kb/update",
 									"host": [
 										"{{baseUrl}}"
 									],
@@ -5116,7 +5876,7 @@
 										"ragflow",
 										"v1",
 										"kb",
-										"list"
+										"update"
 									]
 								}
 							},
@@ -5177,6 +5937,7 @@
 			"script": {
 				"type": "text/javascript",
 				"packages": {},
+				"requests": {},
 				"exec": [
 					""
 				]
@@ -5187,6 +5948,7 @@
 			"script": {
 				"type": "text/javascript",
 				"packages": {},
+				"requests": {},
 				"exec": [
 					""
 				]
