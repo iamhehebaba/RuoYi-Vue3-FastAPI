@@ -19,7 +19,7 @@ class LanggraphClient:
         self.base_url = LanggraphConfig.langgraph_api_url
         self.session = requests.Session()
         self.headers = {"Content-Type": "application/json"}
-        self.session.timeout = 30
+        self.session.timeout = 60 * 6
         
     async def _make_request(self, method: str, path: str, **kwargs) -> requests.Response:
         """
@@ -111,7 +111,7 @@ class LanggraphClient:
             # 准备请求参数
             kwargs = {
                 'headers': request_headers,
-                'timeout': 30
+                'timeout': self.session.timeout
             }
             
             # 添加查询参数
@@ -148,7 +148,7 @@ class LanggraphClient:
         url = f"{self.base_url}{path}"
         
         try:
-            async with httpx.AsyncClient(timeout=30) as client:
+            async with httpx.AsyncClient(timeout=self.session.timeout) as client:
 
                 request_headers = headers.copy() if headers else {}
 
