@@ -146,6 +146,14 @@ RAGFLOW_RULES: List[ProxyRule] = [
         "description": "remove documents",
         "straight_forward": True,
     },
+    {
+        "path_prefix": "\/v1\/document\/rename",
+        "method": "POST",
+        "permission": ["kb:doc:add"],
+        "description": "rename documents",
+        "straight_forward": True,
+    },    
+    
     
 
     # tenant apis
