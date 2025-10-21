@@ -91,6 +91,12 @@ class LanggraphSettings(BaseSettings):
 
     langgraph_api_url: str = 'http://localhost:8000'
 
+class LlmSetting(BaseSettings):
+    """
+    official LLM provider settings
+    """
+    tongyi_qianwen_base_url: str = 'https://dashscope.aliyuncs.com/compatible-mode/v1'
+    deepseek_base_url: str = 'https://api.deepseek.com/v1'
 
 class GenSettings:
     """
@@ -237,6 +243,14 @@ class GetConfig:
         # 实例化Langgraph配置模型
         return LanggraphSettings()
 
+    @lru_cache()
+    def get_llm_config(self):
+        """
+        获取LLM配置
+        """
+        # 实例化LLM配置模型
+        return LlmSetting()
+
     @staticmethod
     def parse_cli_args():
         """
@@ -286,3 +300,5 @@ UploadConfig = get_config.get_upload_config()
 RagflowConfig = get_config.get_ragflow_config()
 # Langgraph配置
 LanggraphConfig = get_config.get_langgraph_config()
+# LLM配置
+LlmConfig = get_config.get_llm_config()
