@@ -544,8 +544,9 @@ class ThreadService:
             try:
                 import json
                 payload = json.loads(body.decode('utf-8'))
-            except (json.JSONDecodeError, UnicodeDecodeError):
-                payload = body
+            except (json.JSONDecodeError, UnicodeDecodeError) as e:
+                logger.error(f"解析请求体为JSON时出错。请求体：{body}，错误：{e}")
+                raise ModelValidatorException(message=f"请求体不是一个合法的json对象！") 
 
         if payload and payload.get("config") and 'configurable' in payload["config"]:
             configurable = payload["config"]['configurable']
@@ -571,7 +572,7 @@ class ThreadService:
                             # refresh api_base_url & api_key in redis
                             redis_client = request.app.state.redis
                             if not llm_config.api_base:
-                                llm_config.api_base = getattr(LlmConfig, f"{chat_llm_factory.lower()}_base_url")
+                                llm_config.api_base = getattr(LlmConfig, f"{chat_llm_factory.replace('-', '_').lower()}_base_url")
                                 logger.info(f"根据chat_llm_factory={chat_llm_factory}获取到LLM base_url={llm_config.api_base}")
 
                             await redis_client.set(ThreadService.REDIS_KEY_CHAT_LLM_API_BASE_URL+thread_id_in_path, llm_config.api_base, ex=60 * 3)
