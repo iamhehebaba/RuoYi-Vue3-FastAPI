@@ -14,14 +14,16 @@ from module_admin.entity.vo.user_vo import CurrentUserModel
 from module_admin.service.agent_service import AgentService
 from module_admin.service.ragflow_tenant_llm_service import RagflowTenantLLMService
 from config.get_db import get_db_ragflow
+from config.env import LlmConfig
+
 
 import httpx
 
 
 class ThreadService:
 
-    REDIS_KEY_CHAT_LLM_API_BASE_URL = "llm_config:chat_llm_api_base_url"
-    REDIS_KEY_CHAT_LLM_API_KEY = "llm_config:chat_llm_api_key"
+    REDIS_KEY_CHAT_LLM_API_BASE_URL = "llm_config:chat_llm_api_base_url:"
+    REDIS_KEY_CHAT_LLM_API_KEY = "llm_config:chat_llm_api_key:"
 
     """
     Thread管理模块服务层
@@ -472,6 +474,18 @@ class ThreadService:
 
         return payload
                 
+    @classmethod
+    def get_thread_id_from_path(cls, full_path: str) -> str:
+        """
+        从路径中提取thread_id
+
+        :param full_path: 知识库路径
+        :return: thread_id
+        """
+        thread_id = StringUtil.extract_regex_group(".*threads/(.*)/(runs|history).*", full_path, 1)
+        if not thread_id:
+            thread_id = StringUtil.extract_regex_group(".*threads/(.*)", full_path, 1)
+        return thread_id
 
     @classmethod
     async def validate_thread_permission(
@@ -494,16 +508,14 @@ class ThreadService:
         :return: 校验结果
         """
 
-        thread_id = StringUtil.extract_regex_group(".*threads/(.*)/(runs|history).*", full_path, 1)
-        if not thread_id:
-            thread_id = StringUtil.extract_regex_group(".*threads/(.*)", full_path, 1)
+        thread_id_in_path = cls.get_thread_id_from_path(full_path)
 
         threads_for_current_user = await cls.get_threads_for_current_user(query_db, current_user)
         thread_ids_for_current_user = [thread.thread_id for thread in threads_for_current_user]
 
-        if thread_id not in thread_ids_for_current_user:
-            logger.error(f"当前用户没有权限访问thread_id为{thread_id}的thread")
-            raise PermissionException(f"当前用户没有权限访问thread_id为{thread_id}的thread")
+        if thread_id_in_path not in thread_ids_for_current_user:
+            logger.error(f"当前用户没有权限访问thread_id为{thread_id_in_path}的thread")
+            raise PermissionException(f"当前用户没有权限访问thread_id为{thread_id_in_path}的thread")
 
     @classmethod
     async def refresh_llm_config(
@@ -526,13 +538,15 @@ class ThreadService:
         :return: 校验结果
         """
 
+        thread_id_in_path = cls.get_thread_id_from_path(full_path)
         payload = None
         if body:
             try:
                 import json
                 payload = json.loads(body.decode('utf-8'))
-            except (json.JSONDecodeError, UnicodeDecodeError):
-                payload = body
+            except (json.JSONDecodeError, UnicodeDecodeError) as e:
+                logger.error(f"解析请求体为JSON时出错。请求体：{body}，错误：{e}")
+                raise ModelValidatorException(message=f"请求体不是一个合法的json对象！") 
 
         if payload and payload.get("config") and 'configurable' in payload["config"]:
             configurable = payload["config"]['configurable']
@@ -543,18 +557,26 @@ class ThreadService:
             
             if chat_llm_factory and chat_llm_name:
                 try:
+                    # special handling for VLLM model name due to ragflow bug: ragflow appends "___VLM" to the model name
+                    ragflow_llm_name = chat_llm_name
+                    if chat_llm_factory.lower() == "vllm":
+                        ragflow_llm_name = chat_llm_name + "___VLLM"                    
 
                     # 调用RagflowTenantLLMService查询LLM配置
                     async for db in get_db_ragflow():
                         llm_config = await RagflowTenantLLMService.get_ragflow_tenant_llm_by_key_service(
-                            db, chat_llm_factory, chat_llm_name
+                            db, chat_llm_factory, ragflow_llm_name
                         )
                     
                         if llm_config:
                             # refresh api_base_url & api_key in redis
                             redis_client = request.app.state.redis
-                            await redis_client.set(ThreadService.REDIS_KEY_CHAT_LLM_API_BASE_URL, llm_config.api_base if llm_config.api_base else '')
-                            await redis_client.set(ThreadService.REDIS_KEY_CHAT_LLM_API_KEY, llm_config.api_key if llm_config.api_key else '')          
+                            if not llm_config.api_base:
+                                llm_config.api_base = getattr(LlmConfig, f"{chat_llm_factory.replace('-', '_').lower()}_base_url")
+                                logger.info(f"根据chat_llm_factory={chat_llm_factory}获取到LLM base_url={llm_config.api_base}")
+
+                            await redis_client.set(ThreadService.REDIS_KEY_CHAT_LLM_API_BASE_URL+thread_id_in_path, llm_config.api_base, ex=60 * 3)
+                            await redis_client.set(ThreadService.REDIS_KEY_CHAT_LLM_API_KEY+thread_id_in_path, llm_config.api_key if llm_config.api_key else '', ex=60 * 3)          
                             logger.info(f"成功刷新LLM配置: {chat_llm_factory}/{chat_llm_name}")
                         else:
                             logger.warning(f"未找到LLM配置: {chat_llm_factory}/{chat_llm_name}")
