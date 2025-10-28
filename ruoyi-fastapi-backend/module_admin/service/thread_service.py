@@ -3,6 +3,7 @@ from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 from module_admin.dao.thread_dao import ThreadDao
+from module_admin.dao.llm_config_dao import LlmConfigDao
 from module_admin.entity.do.langgraphthread_do import LanggraphThread
 from module_admin.entity.vo.thread_vo import ThreadCreateModel, RunCreateModel, ThreadHistoryModel, ThreadSearchModel
 from utils.langgraph_util import LanggraphApiClient
@@ -14,7 +15,7 @@ from module_admin.entity.vo.user_vo import CurrentUserModel
 from module_admin.service.agent_service import AgentService
 from module_admin.service.ragflow_tenant_llm_service import RagflowTenantLLMService
 from config.get_db import get_db_ragflow
-from config.env import LlmConfig
+from config.env import LlmSetting
 
 
 import httpx
@@ -557,29 +558,25 @@ class ThreadService:
             
             if chat_llm_factory and chat_llm_name:
                 try:
-                    # special handling for VLLM model name due to ragflow bug: ragflow appends "___VLM" to the model name
-                    ragflow_llm_name = chat_llm_name
-                    if chat_llm_factory.lower() == "vllm":
-                        ragflow_llm_name = chat_llm_name + "___VLLM"                    
+                    # read the LLM config to get api_base_url & api_key from llm_config table
+                    llm_config = await LlmConfigDao.get_llm_config_detail_by_info(query_db, chat_llm_factory, chat_llm_name, "chat")
 
-                    # 调用RagflowTenantLLMService查询LLM配置
-                    async for db in get_db_ragflow():
-                        llm_config = await RagflowTenantLLMService.get_ragflow_tenant_llm_by_key_service(
-                            db, chat_llm_factory, ragflow_llm_name
-                        )
+                    if not llm_config:
+                        logger.warning(f"未找到LLM配置: {chat_llm_name}@{chat_llm_factory}")
+                        raise ServiceException(f"未找到LLM配置: {chat_llm_name}@{chat_llm_factory}")
                     
-                        if llm_config:
-                            # refresh api_base_url & api_key in redis
-                            redis_client = request.app.state.redis
-                            if not llm_config.api_base:
-                                llm_config.api_base = getattr(LlmConfig, f"{chat_llm_factory.replace('-', '_').lower()}_base_url")
-                                logger.info(f"根据chat_llm_factory={chat_llm_factory}获取到LLM base_url={llm_config.api_base}")
+                    if llm_config:
+                        # refresh api_base_url & api_key in redis
+                        redis_client = request.app.state.redis
+                        if not llm_config.api_base:
+                            llm_config.api_base = getattr(LlmSetting, f"{chat_llm_factory.replace('-', '_').lower()}_base_url")
+                            logger.info(f"根据chat_llm_factory={chat_llm_factory}获取到LLM base_url={llm_config.api_base}")
 
-                            await redis_client.set(ThreadService.REDIS_KEY_CHAT_LLM_API_BASE_URL+thread_id_in_path, llm_config.api_base, ex=60 * 3)
-                            await redis_client.set(ThreadService.REDIS_KEY_CHAT_LLM_API_KEY+thread_id_in_path, llm_config.api_key if llm_config.api_key else '', ex=60 * 3)          
-                            logger.info(f"成功刷新LLM配置: {chat_llm_factory}/{chat_llm_name}")
-                        else:
-                            logger.warning(f"未找到LLM配置: {chat_llm_factory}/{chat_llm_name}")
+                        await redis_client.set(ThreadService.REDIS_KEY_CHAT_LLM_API_BASE_URL+thread_id_in_path, llm_config.api_base, ex=60 * 3)
+                        await redis_client.set(ThreadService.REDIS_KEY_CHAT_LLM_API_KEY+thread_id_in_path, llm_config.api_key if llm_config.api_key else '', ex=60 * 3)          
+                        logger.info(f"成功刷新LLM配置: {chat_llm_factory}/{chat_llm_name}")
+                    else:
+                        logger.warning(f"未找到LLM配置: {chat_llm_factory}/{chat_llm_name}")
                         
                 except Exception as e:
                     logger.error(f"查询LLM配置失败: {str(e)}")
