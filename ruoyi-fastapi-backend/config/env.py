@@ -244,7 +244,7 @@ class GetConfig:
         return LanggraphSettings()
 
     @lru_cache()
-    def get_llm_config(self):
+    def get_llm_setting(self):
         """
         获取LLM配置
         """
@@ -301,4 +301,4 @@ RagflowConfig = get_config.get_ragflow_config()
 # Langgraph配置
 LanggraphConfig = get_config.get_langgraph_config()
 # LLM配置
-LlmConfig = get_config.get_llm_config()
+LlmSetting = get_config.get_llm_setting()

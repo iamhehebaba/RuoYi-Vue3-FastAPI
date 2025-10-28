@@ -37,20 +37,22 @@ class LlmConfigDao:
         return llm_config_info
 
     @classmethod
-    async def get_llm_config_detail_by_info(cls, db: AsyncSession, llm_config: LlmConfigModel):
+    async def get_llm_config_detail_by_info(cls, db: AsyncSession, llm_factory: str, llm_name: str, model_type: str):
         """
         根据LLM配置参数获取配置信息
 
         :param db: orm对象
-        :param llm_config: LLM配置参数对象
+        :param llm_factory: LLM工厂
+        :param llm_name: LLM名称
+        :param model_type: 模型类型
         :return: LLM配置信息对象
         """
         llm_config_info = (
             await db.execute(
                 select(LlmConfig).where(
-                    LlmConfig.llm_factory == llm_config.llm_factory if llm_config.llm_factory else True,
-                    LlmConfig.llm_name == llm_config.llm_name if llm_config.llm_name else True,
-                    LlmConfig.model_type == llm_config.model_type if llm_config.model_type else True,
+                    LlmConfig.llm_factory == llm_factory if llm_factory else True,
+                    LlmConfig.llm_name == llm_name if llm_name else True,
+                    LlmConfig.model_type == model_type if model_type else True,
                 )
             )
         ).scalars().first()

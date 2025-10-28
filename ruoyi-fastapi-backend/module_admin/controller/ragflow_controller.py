@@ -152,9 +152,7 @@ RAGFLOW_RULES: List[ProxyRule] = [
         "permission": ["kb:doc:add"],
         "description": "rename documents",
         "straight_forward": True,
-    },    
-    
-    
+    },       
 
     # tenant apis
     {
