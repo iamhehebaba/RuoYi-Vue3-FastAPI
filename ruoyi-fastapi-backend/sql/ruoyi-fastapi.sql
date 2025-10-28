@@ -822,3 +822,18 @@ create table ragflow_kb (
   primary key (id)
 ) engine=innodb comment = 'ragflow kb表';
 
+# ----------------------------
+-- 25、LLM 配置表
+-- ----------------------------
+drop table if exists llm_config;
+create table llm_config (
+  config_id         int(5)          not null auto_increment    comment 'config主键',
+  llm_factory       varchar(100)    not null                   comment 'llm_factory',
+  llm_name          varchar(100)    not null                   comment 'llm_name',
+  model_type        varchar(50)     not null                   comment 'model_type',
+  api_base          varchar(500)    default null               comment 'api_base',
+  api_key           varchar(500)    default null               comment 'api_key',
+  created_by        varchar(64)     default ''                 comment '创建者',
+  created_at        datetime                                   comment '创建时间',
+  primary key (config_id)
+) engine=innodb comment = 'LLM 配置表';
