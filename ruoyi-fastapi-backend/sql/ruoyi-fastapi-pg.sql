@@ -1175,7 +1175,7 @@ create table ragflow_kb (
   id                varchar(100)    not null,
   dept_id           bigint(20)      default null,
   user_id           bigint(20)      not null,
-  created_by        varchar(64)     default 'admin',
+  created_by        varchar(64)     default '',
   created_at        timestamp(0),
   primary key (id)
 ) engine=innodb comment = 'ragflow kb表';
@@ -1185,3 +1185,28 @@ comment on ragflow_kb.dept_id is '部门ID';
 comment on ragflow_kb.user_id is '创建者user_id';
 comment on ragflow_kb.created_by is '创建者user_name';
 comment on ragflow_kb.created_at is '创建时间';
+
+# ----------------------------
+-- 25、LLM 配置表
+-- ----------------------------
+drop table if exists llm_config;
+create table llm_config (
+  config_id         bigserial not null,
+  llm_factory       varchar(100)    not null,
+  llm_name          varchar(100)    not null,
+  model_type        varchar(50)     not null,
+  api_base          varchar(500)    default null,
+  api_key           varchar(500)    default null,
+  created_by        varchar(64)     default '',
+  created_at        timestamp(0),
+  primary key (config_id)
+) engine=innodb comment = 'LLM 配置表';
+
+comment on llm_config.config_id is 'config主键';
+comment on llm_config.llm_factory is 'llm_factory';
+comment on llm_config.llm_name is 'llm_name';
+comment on llm_config.model_type is 'model_type';
+comment on llm_config.api_base is 'api_base';
+comment on llm_config.api_key is 'api_key';
+comment on llm_config.created_by is '创建者';
+comment on llm_config.created_at is '创建时间';

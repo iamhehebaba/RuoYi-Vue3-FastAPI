@@ -26,6 +26,7 @@ from module_generator.controller.gen_controller import genController
 from module_admin.controller.agent_controller import agentController
 from module_admin.controller.ragflow_controller import ragflowController
 from module_admin.controller.langgraph_controller import langgraphController
+from module_admin.controller.llm_config_controller import llmConfigController
 
 
 
@@ -89,6 +90,7 @@ controller_list = [
     {'router': agentController, 'tags': ['智能体管理']},
     {'router': ragflowController, 'tags': ['Ragflow模型管理']},
     {'router': langgraphController, 'tags': ['Langgraph智能体管理']},
+    {'router': llmConfigController, 'tags': ['系统管理-LLM配置管理']},
 ]
 
 for controller in controller_list:
