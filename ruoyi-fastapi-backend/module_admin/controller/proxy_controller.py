@@ -1,5 +1,6 @@
 import re
-from typing import Any, Dict, List, Optional, Union, Callable, Awaitable
+import asyncio
+from typing import Any, Dict, List, Optional, Union, Callable, Awaitable, AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends, Request, Response
 from requests.models import Response as RequestsResponse
@@ -28,6 +29,36 @@ class ProxyRule(Dict[str, Any]):
     description: Optional[str] # 描述信息
     pre_processor: Optional[List[Callable[[str, Request, AsyncSession, CurrentUserModel, str, Any], Awaitable[Any]]]]  # 前处理函数
     post_processor: Optional[List[Callable[[str, Request, AsyncSession, CurrentUserModel, str, Any], Awaitable[Any]]]]  # 后处理函数
+
+
+async def immediate_stream_wrapper(stream_generator: AsyncGenerator[str, None]) -> AsyncGenerator[str, None]:
+    """
+    立即刷新的流式包装器，确保每个chunk都能立即发送给前端
+    
+    这个包装器解决了FastAPI StreamingResponse的内部缓冲延迟问题：
+    1. 在每次yield后添加微小延迟，强制刷新内部缓冲区
+    2. 确保第一个chunk能够立即发送，而不是等待更多数据
+    3. 保持流式传输的实时性
+    """
+    logger.info("开始使用立即刷新流式包装器")
+    
+    first_chunk = True
+    async for chunk in stream_generator:
+        if chunk and chunk.strip():
+            if first_chunk:
+                logger.info("发送第一个流式chunk，启用立即刷新模式")
+                first_chunk = False
+            
+            # 立即yield chunk
+            yield chunk
+            
+            # 添加微小的异步延迟来强制刷新缓冲区
+            # 这个延迟非常小（1ms），不会影响用户体验，但能确保数据立即发送
+            # 让出事件循环，强制 FastAPI/Starlette 的 StreamingResponse 把当前 chunk 从内部缓冲区刷到 TCP 发送缓冲区；
+            # 0.001 s 足够短，对吞吐影响可忽略，但能打断默认的“凑够 4 kB 再发”行为，实现首字节低延迟。
+            await asyncio.sleep(0.001)
+    logger.info("流式包装器处理完成")
+
 
 class ProxyRuleHandler:
     """
@@ -149,17 +180,36 @@ class ProxyRuleHandler:
         # 检查是否为通配符规则，如果是则直接转发原始请求
         if rule.get("straight_forward"):
             if rule.get("stream_mode"):
-                # 直接将AsyncGenerator传递给StreamingResponse
-                stream_generator = self.proxy_client.post_stream(actual_path, original_headers,body)
+                # 使用立即刷新包装器包装流式生成器
+                stream_generator = self.proxy_client.post_stream(actual_path, original_headers, body)
+                wrapped_generator = immediate_stream_wrapper(stream_generator)
+                
+                # 优化的流式响应头配置，确保立即发送
+                optimized_headers = {
+                    # 基本流式响应头
+                    "Cache-Control": "no-cache, no-store, must-revalidate",
+                    "Pragma": "no-cache",
+                    "Expires": "0",
+                    "Connection": "keep-alive",
+                    
+                    # 传输编码优化
+                    "Transfer-Encoding": "chunked",
+                    "Content-Encoding": "identity",
+                    
+                    # CORS头
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Headers": "*",
+                    "Access-Control-Allow-Methods": "*",
+                    
+                    # 流式优化头
+                    "X-Accel-Buffering": "no",  # 禁用Nginx缓冲
+                    "X-Content-Type-Options": "nosniff",
+                }
+                
                 return StreamingResponse(
-                    stream_generator,
+                    wrapped_generator,
                     media_type="text/event-stream",
-                    headers={
-                        "Cache-Control": "no-cache",
-                        "Connection": "keep-alive",
-                        "Access-Control-Allow-Origin": "*",
-                        "Access-Control-Allow-Headers": "*"
-                    }
+                    headers=optimized_headers
                 )
             else:
                 # 直接转发原始请求，不解析和重构参数        
