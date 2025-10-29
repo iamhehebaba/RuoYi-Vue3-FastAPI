@@ -60,12 +60,10 @@ class LlmConfigService:
         """
         config_id = -1 if page_object.config_id is None else page_object.config_id
         llm_config = await LlmConfigDao.get_llm_config_detail_by_info(
-            query_db, 
-            LlmConfigModel(
-                llm_factory=page_object.llm_factory,
-                llm_name=page_object.llm_name,
-                model_type=page_object.model_type
-            )
+            db=query_db, 
+            llm_factory=page_object.llm_factory,
+            llm_name=page_object.llm_name,
+            model_type=page_object.model_type
         )
         if llm_config and llm_config.config_id != config_id:
             return CommonConstant.NOT_UNIQUE
